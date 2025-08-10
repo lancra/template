@@ -1,0 +1,13 @@
+<Solution>
+
+  <Folder Name="/Solution Items/" Id="__GUID__">
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="NuGet.config" />
+    <File Path="README.md" />
+  </Folder>
+
+</Solution>
