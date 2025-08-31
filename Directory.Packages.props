@@ -8,4 +8,8 @@
     <PackageVersion Include="StyleCop.Analyzers.Unstable" Version="__NUGET_VERSION__" />
   </ItemGroup>
 
+  <ItemGroup Label="Tooling">
+    <PackageVersion Include="MinVer" Version="__NUGET_VERSION__" />
+  </ItemGroup>
+
 </Project>
