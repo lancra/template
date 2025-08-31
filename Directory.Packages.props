@@ -4,4 +4,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
+  <ItemGroup Label="Static Analysis">
+    <PackageVersion Include="StyleCop.Analyzers.Unstable" Version="__NUGET_VERSION__" />
+  </ItemGroup>
+
 </Project>
