@@ -1,0 +1,32 @@
+root = true
+
+[*]
+charset = utf-8
+guidelines = 135
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{cs,ps1,psm1}]
+indent_size = 4
+
+[*.{config,cshtml,css,html,js,json,md,nuspec,*proj,props,resx,scss,targets,tasks,ts,xml,yml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.sh]
+end_of_line = lf
+indent_size = 4
+
+[*.ts]
+quote_type = single
+
+[*.resx]
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+
+[/.config/dotnet-tools.json]
+insert_final_newline = unset
+

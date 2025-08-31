@@ -16,4 +16,17 @@
     </AssemblyAttribute>
   </ItemGroup>
 
+  <PropertyGroup Label="Static Analysis">
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <ItemGroup Label="Static Analysis">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" Link="stylecop.json" />
+    <PackageReference Include="StyleCop.Analyzers.Unstable">
+      <IncludeAssets>analyzers; build; contentfiles; native; runtime</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
 </Project>
