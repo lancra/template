@@ -13,4 +13,10 @@
     <File Path="stylecop.json" />
   </Folder>
 
+  <Folder Name="/tests/" Id="__GUID__">
+    <File Path="tests/Directory.Build.props" />
+    <File Path="tests/TestingSuppressions.cs" />
+    <File Path="tests/xunit.runner.json" />
+  </Folder>
+
 </Solution>
