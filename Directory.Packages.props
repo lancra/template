@@ -8,6 +8,15 @@
     <PackageVersion Include="StyleCop.Analyzers.Unstable" Version="__NUGET_VERSION__" />
   </ItemGroup>
 
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="coverlet.collector" Version="__NUGET_VERSION__" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="__NUGET_VERSION__" />
+    <PackageVersion Include="Moq" Version="__NUGET_VERSION__" />
+    <PackageVersion Include="Moq.AutoMock" Version="__NUGET_VERSION__" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="__NUGET_VERSION__" />
+    <PackageVersion Include="xunit.v3" Version="__NUGET_VERSION__" />
+  </ItemGroup>
+
   <ItemGroup Label="Tooling">
     <PackageVersion Include="MinVer" Version="__NUGET_VERSION__" />
   </ItemGroup>
