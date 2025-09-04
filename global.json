@@ -3,5 +3,8 @@
     "allowPrerelease": false,
     "rollForward": "latestMinor",
     "version": "__DOTNET_SDK__"
+  },
+  "test": {
+    "runner": "Microsoft.Testing.Platform"
   }
 }
