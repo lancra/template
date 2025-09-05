@@ -19,4 +19,8 @@
     <File Path="tests/xunit.runner.json" />
   </Folder>
 
+  <Folder Name="/tools/" Id="__GUID__">
+    <Project Path="tools/Dev/__PROJECT__.Dev.csproj" />
+  </Folder>
+
 </Solution>
