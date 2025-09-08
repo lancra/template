@@ -4,6 +4,7 @@ internal static class TargetKeys
 {
     public const string Build = "build";
     public const string Clean = "clean";
+    public const string Coverage = "coverage";
     public const string Default = "default";
     public const string Dotnet = "dotnet";
     public const string Lint = "lint";
