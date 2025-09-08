@@ -44,7 +44,10 @@ internal sealed class TestTarget : ITarget
                 $"--project {project.Path}",
                 "--no-build",
                 $"--results-directory {testResultsPath}",
-                "--config-file tests/testconfig.json")
+                "--config-file tests/testconfig.json",
+                "--coverage",
+                "--coverage-output-format xml",
+                "--coverage-settings tests/code-coverage.xml")
             .ConfigureAwait(false);
     }
 }

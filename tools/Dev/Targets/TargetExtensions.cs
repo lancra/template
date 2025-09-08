@@ -15,6 +15,7 @@ internal static class TargetExtensions
     private static IServiceCollection AddBuildTargets(this IServiceCollection services)
         => services.AddTarget<BuildTarget>()
         .AddTarget<CleanTarget>()
+        .AddTarget<CoverageTarget>()
         .AddTarget<DotnetTarget>()
         .AddTarget<SolutionTarget>()
         .AddTarget<TestTarget>();

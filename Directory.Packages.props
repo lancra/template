@@ -15,6 +15,7 @@
   <ItemGroup Label="Testing">
     <PackageVersion Include="coverlet.collector" Version="__NUGET_VERSION__" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="__NUGET_VERSION__" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="__NUGET_VERSION__" />
     <PackageVersion Include="Moq" Version="__NUGET_VERSION__" />
     <PackageVersion Include="Moq.AutoMock" Version="__NUGET_VERSION__" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="__NUGET_VERSION__" />

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Configuration>
+  <CodeCoverage>
+    <ModulePaths>
+      <Include>
+        <ModulePath>.*\\__PROJECT__.*\.dll$</ModulePath>
+      </Include>
+      <Exclude>
+        <ModulePath>.*Dev.dll</ModulePath>
+        <ModulePath>.*Facts.dll</ModulePath>
+        <ModulePath>.*Tests.dll</ModulePath>
+      </Exclude>
+    </ModulePaths>
+    <SkipAutoProperties>True</SkipAutoProperties>
+  </CodeCoverage>
+</Configuration>
