@@ -17,6 +17,7 @@ internal static class TargetExtensions
         .AddTarget<CleanTarget>()
         .AddTarget<CoverageTarget>()
         .AddTarget<DotnetTarget>()
+        .AddTarget<PublishTarget>()
         .AddTarget<SolutionTarget>()
         .AddTarget<TestTarget>();
 

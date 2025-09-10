@@ -4,8 +4,8 @@ internal sealed class BuildTarget : ITarget
 {
     private static readonly string[] Dependencies =
     [
-        TargetKeys.Dotnet,
         TargetKeys.Test,
+        TargetKeys.Publish,
     ];
 
     public void Setup(Bullseye.Targets targets)
