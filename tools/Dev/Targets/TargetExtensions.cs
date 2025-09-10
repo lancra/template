@@ -15,7 +15,8 @@ internal static class TargetExtensions
         => services.AddTarget<BuildTarget>()
         .AddTarget<CleanTarget>()
         .AddTarget<DotnetTarget>()
-        .AddTarget<SolutionTarget>();
+        .AddTarget<SolutionTarget>()
+        .AddTarget<TestTarget>();
 
     private static IServiceCollection AddTarget<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TTarget>(
