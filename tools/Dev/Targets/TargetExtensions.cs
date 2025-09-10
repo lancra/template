@@ -15,6 +15,7 @@ internal static class TargetExtensions
         => services.AddTarget<BuildTarget>()
         .AddTarget<CleanTarget>()
         .AddTarget<DotnetTarget>()
+        .AddTarget<PublishTarget>()
         .AddTarget<SolutionTarget>()
         .AddTarget<TestTarget>();
 
