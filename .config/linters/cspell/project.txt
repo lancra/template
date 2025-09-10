@@ -1,0 +1,24 @@
+# MSBuild
+buildtransitive
+contentfiles
+globalconfig
+slnf
+slnx
+
+# ReportGenerator
+reportgenerator
+reporttypes
+targetdir
+
+# .NET
+nologo
+warnaserror
+
+# NuGet
+stylecop
+xunit
+
+# Command Line
+popd
+pushd
+lastexitcode

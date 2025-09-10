@@ -1,0 +1,29 @@
+# $schema: https://raw.githubusercontent.com/megalinter/megalinter/main/megalinter/descriptors/schemas/megalinter-configuration.jsonschema.json
+# See: https://megalinter.io/latest/config-file/
+
+# Global
+APPLY_FIXES: none
+ENABLE_LINTERS:
+  - ACTION_ACTIONLINT
+  - BASH_EXEC
+  - BASH_SHELLCHECK
+  - BASH_SHFMT
+  - EDITORCONFIG_EDITORCONFIG_CHECKER
+  - JSON_JSONLINT
+  - JSON_V8R
+  - JSON_PRETTIER
+  - MARKDOWN_MARKDOWNLINT
+  - MARKDOWN_MARKDOWN_LINK_CHECK
+  - MARKDOWN_MARKDOWN_TABLE_FORMATTER
+  - POWERSHELL_POWERSHELL
+  - POWERSHELL_POWERSHELL_FORMATTER
+  - SPELL_CSPELL
+  - YAML_PRETTIER
+  - YAML_V8R
+  - YAML_YAMLLINT
+LINTER_RULES_PATH: .config/linters
+PRINT_ALPACA: false
+SHOW_ELAPSED_TIME: true
+
+# Linters
+SPELL_CSPELL_CLI_LINT_MODE: project
