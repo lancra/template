@@ -12,7 +12,10 @@ internal static class TargetExtensions
         .AddTarget<LintTarget>();
 
     private static IServiceCollection AddBuildTargets(this IServiceCollection services)
-        => services.AddTarget<SolutionTarget>();
+        => services.AddTarget<BuildTarget>()
+        .AddTarget<CleanTarget>()
+        .AddTarget<DotnetTarget>()
+        .AddTarget<SolutionTarget>();
 
     private static IServiceCollection AddTarget<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TTarget>(
