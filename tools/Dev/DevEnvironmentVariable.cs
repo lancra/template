@@ -4,11 +4,20 @@ namespace __PROJECT__.Dev;
 
 internal sealed class DevEnvironmentVariable : SmartEnum<DevEnvironmentVariable, string>
 {
+    public static readonly DevEnvironmentVariable BuildConfiguration =
+        new("BUILD_CONFIGURATION", "The .NET build configuration.", "Release");
+
     public static readonly DevEnvironmentVariable ContainerRuntime =
         new("CONTAINER_RUNTIME", "The container runtime to use for target commands.", "podman");
 
     public static readonly DevEnvironmentVariable Linters =
         new("LINTERS", "The linters to execute as part of the lint target.");
+
+    public static readonly DevEnvironmentVariable LocalBuild =
+        new("LOCAL_BUILD", "Denotes that the build should be more permissive to warnings.")
+        {
+            IsBoolean = true,
+        };
 
     public static readonly DevEnvironmentVariable LocalLint =
         new("LOCAL_LINT", "Denotes that linters should fix issues where applicable.")
