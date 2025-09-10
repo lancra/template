@@ -10,4 +10,8 @@ internal static class ArtifactPaths
     public const string LintResults = $"{Root}/linting";
 
     public const string Solution = $"{Root}/__PROJECT__.slnf";
+
+    public const string Tests = $"{Root}/tests";
+    public const string TestResults = $"{Tests}/results";
+    public static readonly CompositeFormat TestResultFormat = CompositeFormat.Parse($"{TestResults}/{{0}}");
 }
