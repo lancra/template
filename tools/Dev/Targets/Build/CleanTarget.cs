@@ -10,6 +10,13 @@ internal sealed class CleanTarget : ITarget
             ExecuteAsync);
 
     private static async Task ExecuteAsync()
-        => await DotnetCli.RunAsync($"clean {ArtifactPaths.Solution}")
-        .ConfigureAwait(false);
+    {
+        await DotnetCli.RunAsync($"clean {ArtifactPaths.Solution}")
+            .ConfigureAwait(false);
+
+        if (Directory.Exists(ArtifactPaths.TestResults))
+        {
+            Directory.Delete(ArtifactPaths.TestResults, recursive: true);
+        }
+    }
 }
