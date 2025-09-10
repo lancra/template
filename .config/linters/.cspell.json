@@ -1,0 +1,47 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "dictionaries": [
+    "command-line",
+    "dotnet",
+    "msbuild",
+    "nuget",
+    "project",
+    "reportgenerator"
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "command-line",
+      "path": "./cspell/command-line.txt",
+      "addWords": false
+    },
+    {
+      "name": "dotnet",
+      "path": "./cspell/dotnet.txt",
+      "addWords": false
+    },
+    {
+      "name": "msbuild",
+      "path": "./cspell/msbuild.txt",
+      "addWords": false
+    },
+    {
+      "name": "nuget",
+      "path": "./cspell/nuget.txt",
+      "addWords": false
+    },
+    {
+      "name": "project",
+      "path": "./cspell/project.txt",
+      "addWords": true
+    },
+    {
+      "name": "reportgenerator",
+      "path": "./cspell/reportgenerator.txt",
+      "addWords": false
+    }
+  ],
+  "language": "en",
+  "noConfigSearch": true,
+  "useGitignore": true,
+  "version": "0.2"
+}
