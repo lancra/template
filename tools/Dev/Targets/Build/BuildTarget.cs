@@ -4,7 +4,7 @@ internal sealed class BuildTarget : ITarget
 {
     private static readonly string[] Dependencies =
     [
-        TargetKeys.Dotnet,
+        TargetKeys.Publish,
         TargetKeys.Test,
     ];
 

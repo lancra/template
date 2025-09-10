@@ -8,6 +8,7 @@ internal static class TargetKeys
     public const string Default = "default";
     public const string Dotnet = "dotnet";
     public const string Lint = "lint";
+    public const string Publish = "publish";
     public const string Solution = "solution";
     public const string Test = "test";
     public const string TestIntegration = "test.integration";
