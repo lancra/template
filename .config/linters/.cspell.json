@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "ignoreWords": [
+    "buildtransitive",
+    "contentfiles",
+    "globalconfig",
+    "lastexitcode",
+    "nologo",
+    "popd",
+    "pushd",
+    "reportgenerator",
+    "reporttypes",
+    "slnf",
+    "slnx",
+    "targetdir",
+    "testconfig",
+    "warnaserror"
+  ],
+  "language": "en",
+  "noConfigSearch": true,
+  "useGitignore": true,
+  "version": "0.2",
+  "words": ["ardalis", "stylecop", "xunit"]
+}

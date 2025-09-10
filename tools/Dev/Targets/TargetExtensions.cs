@@ -7,6 +7,7 @@ internal static class TargetExtensions
 {
     public static IServiceCollection AddTargets(this IServiceCollection services)
         => services.AddTarget<DefaultTarget>()
+        .AddTarget<LintTarget>()
         .AddTarget<VariablesTarget>();
 
     private static IServiceCollection AddTarget<
