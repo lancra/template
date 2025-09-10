@@ -8,4 +8,6 @@ internal static class ArtifactPaths
     public const string Root = "artifacts";
 
     public const string LintResults = $"{Root}/linting";
+
+    public const string Solution = $"{Root}/__PROJECT__.slnf";
 }
