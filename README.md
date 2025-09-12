@@ -36,27 +36,8 @@ This repository provides various templates for new Git repositories.
    & <REPOSITORY>/.template/scripts/populate-token-values.ps1 -Source <TOKENS>
    ```
 
-1. For each commit in the branch:
+1. Apply each commit for the template.
 
-   ```shell
-   git --no-pager log --oneline --reverse --format="  %H %s" template/<TEMPLATE>-base..template/<TEMPLATE>
+   ```powershell
+   & <REPOSITORY>/.template/scripts/apply-commit.ps1 -Template <TEMPLATE> -TokenPath <TOKENS>
    ```
-
-   1. Cherry-pick the commit into the target repository.
-
-      ```shell
-      git cherry-pick <COMMIT>
-      ```
-
-   1. Replace the tokens in the picked files.
-
-      ```powershell
-      & <REPOSITORY>/.template/scripts/replace-tokens.ps1 -Source <TOKENS>
-      ```
-
-   1. Amend the latest commit with the token replacements.
-
-      ```shell
-      git add .
-      git commit --amend --no-edit
-      ```
