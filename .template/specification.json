@@ -1,5 +1,65 @@
 {
   "$schema": "https://raw.githubusercontent.com/lancra/template/main/.template/specification.schema.json",
   "executions": [],
-  "tokens": {}
+  "tokens": {
+    "CSHARP_LANGUAGE_VERSION": {
+      "description": "The version to use for the C# language.",
+      "kind": "static",
+      "value": "__CSHARP_LANGUAGE_VERSION__",
+      "example": "latest",
+      "default": true
+    },
+    "DOTNET_RUNTIME": {
+      "description": "The .NET target framework runtime version.",
+      "kind": "static",
+      "value": "__DOTNET_RUNTIME__",
+      "example": "net8.0",
+      "default": true
+    },
+    "DOTNET_SDK": {
+      "description": "The minimum .NET SDK version required to develop the application.",
+      "kind": "static",
+      "value": "__DOTNET_SDK__",
+      "example": "8.0.100",
+      "default": true
+    },
+    "ENVIRONMENT_VARIABLE_PREFIX": {
+      "description": "The prefix used for environment variables specific to the application.",
+      "kind": "static",
+      "value": "__ENVIRONMENT_VARIABLE_PREFIX__",
+      "example": "SAMPLE_SOFTWARE",
+      "default": false
+    },
+    "GUID": {
+      "description": "A globally unique identifier.",
+      "kind": "generated",
+      "generator": "./generators/generate-guid.ps1"
+    },
+    "NUGET_VERSION": {
+      "description": "The latest release version of a NuGet package.",
+      "kind": "generated",
+      "generator": "./generators/generate-nuget-version.ps1"
+    },
+    "PROJECT": {
+      "description": "The software name used on solutions and projects.",
+      "kind": "static",
+      "value": "__PROJECT__",
+      "example": "SampleSoftware",
+      "default": false
+    },
+    "REPOSITORY": {
+      "description": "The name of the software repository.",
+      "kind": "static",
+      "value": "__REPOSITORY__",
+      "example": "sample-software",
+      "default": false
+    },
+    "TITLE": {
+      "description": "The title of the software.",
+      "kind": "static",
+      "value": "__TITLE__",
+      "example": "Sample Software",
+      "default": false
+    }
+  }
 }
