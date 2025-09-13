@@ -5,8 +5,30 @@
   "description": "The specification used to apply a template to a target repository.",
   "type": "object",
   "definitions": {
-    "token": {
-      "title": "Template Token Definition",
+    "generatedToken": {
+      "title": "Generated Template Token Definition",
+      "description": "The definition of a replacement token, including the generated used to dynamically create the value.",
+      "type": "object",
+      "properties": {
+        "generator": {
+          "description": "The target generator used to create the value for token replacement.",
+          "type": "string",
+          "format": "file-path",
+          "minLength": 1
+        },
+        "description": {
+          "description": "The description of the token usage and format.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "generator",
+        "description"
+      ]
+    },
+    "staticToken": {
+      "title": "Static Template Token Definition",
       "description": "The definition of a replacement token, including the target value used for application.",
       "type": "object",
       "properties": {
@@ -34,12 +56,23 @@
     }
   },
   "properties": {
-    "tokens": {
-      "description": "The  token definitions used for replacement when applying a template.",
+    "generated": {
+      "description": "The generated token definitions used for replacement when applying a template.",
       "type": "object",
       "patternProperties": {
         "^(?=[A-Z])[A-Z_].*(?<!_)$": {
-          "$ref": "#/definitions/token"
+          "$ref": "#/definitions/generatedToken"
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    },
+    "static": {
+      "description": "The static token definitions used for replacement when applying a template.",
+      "type": "object",
+      "patternProperties": {
+        "^(?=[A-Z])[A-Z_].*(?<!_)$": {
+          "$ref": "#/definitions/staticToken"
         }
       },
       "additionalProperties": false,
@@ -47,6 +80,7 @@
     }
   },
   "required": [
-    "tokens"
+    "generated",
+    "static"
   ]
 }

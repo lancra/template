@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Prompts for population of token definition values in a specification.
+Prompts for population of static token definition values in a specification.
 
 .DESCRIPTION
 Iterates through each token definition in the provided specification, prompting
@@ -23,10 +23,10 @@ if (-not (Test-Path -Path $Source)) {
 $tokenSpecification = Get-Content -Path $Source |
     ConvertFrom-Json
 
-$tokenSpecification.tokens.PSObject.Properties |
+$tokenSpecification.static.PSObject.Properties |
     Select-Object -ExpandProperty Name |
     ForEach-Object {
-        $tokenSpecification.tokens.$_.value = Read-Host -Prompt "$_ ($($tokenSpecification.tokens.$_.description))"
+        $tokenSpecification.static.$_.value = Read-Host -Prompt "$_ ($($tokenSpecification.static.$_.description))"
     }
 
 $tokenSpecification |
