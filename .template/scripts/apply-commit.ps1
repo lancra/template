@@ -4,9 +4,9 @@ Applies a template commit to the current repository.
 
 .DESCRIPTION
 First, the template TODO file is setup if not present. Then, the first commit
-without an indicator is cherry-picked into the repository and the provided
-tokens are replaced into it. Finally, the indicator is added to the applied
-commit in the TODO file.
+without an indicator is cherry-picked into the repository, the provided tokens
+are replaced into it, and any notes executions are run. Finally, the indicator
+is added to the applied commit in the TODO file.
 
 .PARAMETER TokenPath
 The location of the specification to use for token replacement.
@@ -118,6 +118,38 @@ Write-Output ''
 Write-Output "Amending '$message' with token replacements."
 git add .
 git commit --amend --no-edit
+
+function Set-NoteVariable {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Text
+    )
+    process {
+        $Text -replace '\$repository', "$PSScriptRoot/../.." `
+            -replace '\$message', $message
+    }
+}
+
+$noteId = git notes list $id 2> $null
+if ($null -ne $noteId) {
+    git show $noteId |
+        ConvertFrom-Json |
+        Select-Object -ExpandProperty 'executions' |
+        ForEach-Object {
+            $display = Set-NoteVariable -Text $_.display
+            Write-Output ''
+            Write-Output $display
+
+            $_ |
+                Select-Object -ExpandProperty 'commands' |
+                ForEach-Object {
+                    Set-NoteVariable $_ |
+                        Invoke-Expression
+                }
+        }
+}
 
 $newCommitMatchLine = "*$($nextCommitMatch.Value.Substring(1))"
 $todoLines -replace $nextCommitMatch.Value, $newCommitMatchLine |
