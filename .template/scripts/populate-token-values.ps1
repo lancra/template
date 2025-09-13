@@ -6,21 +6,21 @@ Prompts for population of static token definition values in a specification.
 Iterates through each token definition in the provided specification, prompting
 for a value. The resulting specification is finally rewritten back to the file.
 
-.PARAMETER Source
+.PARAMETER TokenPath
 The source template specification to add token values to.
 #>
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string] $Source
+    [string] $TokenPath
 )
 
-if (-not (Test-Path -Path $Source)) {
-    throw "The token specification was not found at '$Source'."
+if (-not (Test-Path -Path $TokenPath)) {
+    throw "The token specification was not found at '$TokenPath'."
 }
 
-$tokenSpecification = Get-Content -Path $Source |
+$tokenSpecification = Get-Content -Path $TokenPath |
     ConvertFrom-Json
 
 $tokenSpecification.static.PSObject.Properties |
@@ -31,4 +31,4 @@ $tokenSpecification.static.PSObject.Properties |
 
 $tokenSpecification |
     ConvertTo-Json |
-    Set-Content -Path $Source
+    Set-Content -Path $TokenPath

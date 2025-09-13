@@ -18,10 +18,10 @@ The target template to use for application.
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string] $Template,
+    [string] $TokenPath,
 
     [Parameter(Mandatory)]
-    [string] $TokenPath
+    [string] $Template
 )
 
 $status = git status --short
@@ -112,7 +112,7 @@ $message = Get-CommitGroupValue -Commit $nextCommitMatch -Group $messageGroupNam
 
 Write-Output "Applying '$message'."
 git cherry-pick $id
-& "$PSScriptRoot/replace-tokens.ps1" -Source $TokenPath
+& "$PSScriptRoot/replace-tokens.ps1" -TokenPath $TokenPath
 
 Write-Output ''
 Write-Output "Amending '$message' with token replacements."

@@ -9,7 +9,7 @@ The token definition is then added to the specification, and the new set of
 tokens is sorted alphabetically before writing the new specification back to the
 source.
 
-.PARAMETER Source
+.PARAMETER TokenPath
 The source template specification to add a token definition to.
 
 .PARAMETER Type
@@ -27,7 +27,7 @@ provided, the user is prompted for it at run-time.
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string] $Source,
+    [string] $TokenPath,
 
     [Parameter(Mandatory)]
     [ValidateSet('Generated', 'Static')]
@@ -43,8 +43,8 @@ param(
 $generatedTokenType = 'Generated'
 $staticTokenType = 'Static'
 
-if (-not (Test-Path -Path $Source)) {
-    throw "The token specification was not found at '$Source'."
+if (-not (Test-Path -Path $TokenPath)) {
+    throw "The token specification was not found at '$TokenPath'."
 }
 
 function Read-PropertyValue {
@@ -66,7 +66,7 @@ function Read-PropertyValue {
     }
 }
 
-$tokenSpecification = Get-Content -Path $Source |
+$tokenSpecification = Get-Content -Path $TokenPath |
     ConvertFrom-Json
 
 $Key = Read-PropertyValue -Name 'Key' -Value $Key
@@ -141,4 +141,4 @@ $tokenSpecification.static.PSObject.Properties |
 
 $newTokenSpecification |
     ConvertTo-Json |
-    Set-Content -Path $Source
+    Set-Content -Path $TokenPath

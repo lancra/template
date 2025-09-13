@@ -27,11 +27,11 @@ This repository provides various templates for new Git repositories.
 1. Populate values in the copied token specification.
 
    ```powershell
-   & "$repository/.template/scripts/populate-token-values.ps1" -Source $tokens
+   & "$repository/.template/scripts/populate-token-values.ps1" -TokenPath $tokens
    ```
 
 1. Apply each commit for the template.
 
    ```powershell
-   & "$repository/.template/scripts/apply-commit.ps1" -Template $template -TokenPath $tokens
+   & "$repository/.template/scripts/apply-commit.ps1" -TokenPath $tokens -Template $template
    ```
