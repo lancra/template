@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/lancra/template/main/.template/tokens.schema.json",
+  "title": "Template Application Specification",
+  "description": "The specification used to apply a template to a target repository.",
+  "type": "object",
+  "definitions": {
+    "token": {
+      "title": "Template Token Definition",
+      "description": "The definition of a replacement token, including the target value used for application.",
+      "type": "object",
+      "properties": {
+        "value": {
+          "description": "The target value used for token replacement.",
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "description": "The description of the token usage and format.",
+          "type": "string",
+          "minLength": 1
+        },
+        "example": {
+          "description": "The sample value to show usage of the token within the template.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "value",
+        "description",
+        "example"
+      ]
+    }
+  },
+  "properties": {
+    "tokens": {
+      "description": "The  token definitions used for replacement when applying a template.",
+      "type": "object",
+      "patternProperties": {
+        "^(?=[A-Z])[A-Z_].*(?<!_)$": {
+          "$ref": "#/definitions/token"
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    }
+  },
+  "required": [
+    "tokens"
+  ]
+}
