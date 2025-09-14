@@ -35,3 +35,9 @@ This repository provides various templates for new Git repositories.
    ```powershell
    & "$repository/.template/scripts/apply-commit.ps1" -TokenPath $tokens
    ```
+
+1. Remove remnants of the template process.
+
+   ```powershell
+   & "$repository/.template/scripts/cleanup.ps1" -RepositoryPath $repository
+   ```
