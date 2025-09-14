@@ -29,6 +29,25 @@ param(
     [string] $Template
 )
 
+$inRepositoryRoot = Test-Path -Path '.git'
+if (-not $inRepositoryRoot) {
+    throw "Repository setup must be executed from the repository root."
+}
+
+$isTemplateRepositoryRoot = Test-Path -Path "$RepositoryPath/.git"
+if (-not $isTemplateRepositoryRoot) {
+    throw "The provided repository path must be the root of the template repository."
+}
+
+if (-not (Test-Path -Path $TokenPath)) {
+    throw "The provided token source '$TokenPath' could not be found."
+}
+
+git -C $RepositoryPath rev-parse --verify --quiet "origin/$Template" | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw "The $Template template was not found in the template repository."
+}
+
 Write-Output "Fetching notes for template repository."
 git -C $RepositoryPath fetch origin refs/notes/*:refs/notes/*
 Write-Output ''
@@ -53,3 +72,11 @@ Write-Output ''
 
 Write-Output "Extracting template tokens to '$TokenPath'."
 git show "template/${Template}:.template/tokens.json" > $TokenPath
+
+$todoFile = '.template.todo'
+
+Write-Output "Adding template TODO to local ignore file."
+Add-Content -Path '.git/info/exclude' -Value "$todoFile`n" -NoNewline
+
+Write-Output "Creating template TODO."
+git --no-pager log --oneline --reverse --format="  %H %s" "template/base-$Template..template/$Template" > $todoFile

@@ -10,18 +10,12 @@ is added to the applied commit in the TODO file.
 
 .PARAMETER TokenPath
 The location of the specification to use for token replacement.
-
-.PARAMETER Template
-The target template to use for application.
 #>
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string] $TokenPath,
-
-    [Parameter(Mandatory)]
-    [string] $Template
+    [string] $TokenPath
 )
 
 $status = git status --short
@@ -36,31 +30,8 @@ if (-not $inRepositoryRoot) {
     throw "Template commits must be applied from the repository root."
 }
 
-git rev-parse --verify --quiet "template/$Template" | Out-Null
-if ($LASTEXITCODE -ne 0) {
-    throw "The $Template template was not found in the template remote."
-}
-
 if (-not (Test-Path -Path $TokenPath)) {
     throw "The provided token source '$TokenPath' could not be found."
-}
-
-$script:ignoringTodo = $false
-$localIgnoreFile = '.git/info/exclude'
-Get-Content -Path $localIgnoreFile |
-    ForEach-Object {
-        if ($_ -eq $todoFile) {
-            $script:ignoringTodo = $true
-        }
-    }
-
-if (-not $script:ignoringTodo) {
-    Add-Content -Path $localIgnoreFile -Value "$todoFile`n" -NoNewline
-}
-
-$todoInProgress = Test-Path -Path $todoFile
-if (-not $todoInProgress) {
-    git --no-pager log --oneline --reverse --format="  %H %s" "template/$Template-base..template/$Template" > $todoFile
 }
 
 $todoLines = Get-Content -Path $todoFile

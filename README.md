@@ -33,5 +33,5 @@ This repository provides various templates for new Git repositories.
 1. Apply each commit for the template.
 
    ```powershell
-   & "$repository/.template/scripts/apply-commit.ps1" -TokenPath $tokens -Template $template
+   & "$repository/.template/scripts/apply-commit.ps1" -TokenPath $tokens
    ```
