@@ -1,16 +1,10 @@
 {
   "executions": [
     {
-      "display": "Adding license.",
+      "display": "Creating license.",
+      "stage": "Replace",
       "commands": [
         "$repository/.template/scripts/add-license.ps1"
-      ]
-    },
-    {
-      "display": "Amending '$message' with license.",
-      "commands": [
-        "git add LICENSE",
-        "git commit --amend --no-edit"
       ]
     }
   ]
