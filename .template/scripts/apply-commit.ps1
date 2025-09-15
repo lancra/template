@@ -81,46 +81,95 @@ function Get-CommitGroupValue {
 $id = Get-CommitGroupValue -Commit $nextCommitMatch -Group $idGroupName
 $message = Get-CommitGroupValue -Commit $nextCommitMatch -Group $messageGroupName
 
-Write-Output "Applying '$message'."
-git cherry-pick $id
-& "$PSScriptRoot/replace-tokens.ps1" -TokenPath $TokenPath
+enum ApplicationStage {
+    Pick
+    Replace
+    Add
+    Amend
+}
 
-Write-Output ''
-Write-Output "Amending '$message' with token replacements."
-git add .
-git commit --amend --no-edit
+class NoteExecution {
+    [ApplicationStage] $Stage
+    [string] $Display
+    [string[]] $Commands
 
-function Set-NoteVariable {
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory)]
-        [string] $Text
-    )
-    process {
-        $Text -replace '\$repository', "$PSScriptRoot/../.." `
-            -replace '\$message', $message
+    NoteExecution([ApplicationStage] $stage, [string] $display, [string[]] $commands) {
+        $this.Stage = $stage
+        $this.Display = $display
+        $this.Commands = $commands
+    }
+
+    static [NoteExecution[]] FromJson([string] $json) {
+        return $json |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty 'executions' |
+            ForEach-Object {
+                $stage = [ApplicationStage]$_.stage
+                $commands = $_.commands |
+                    ForEach-Object {
+                        $_ -replace '\$repository', "$PSScriptRoot/../.."
+                    }
+
+                [NoteExecution]::new($stage, $_.display, $commands)
+            }
     }
 }
 
 $noteId = git notes list $id 2> $null
+$noteExecutions = @()
 if ($null -ne $noteId) {
-    git show $noteId |
-        ConvertFrom-Json |
-        Select-Object -ExpandProperty 'executions' |
-        ForEach-Object {
-            $display = Set-NoteVariable -Text $_.display
-            Write-Output ''
-            Write-Output $display
-
-            $_ |
-                Select-Object -ExpandProperty 'commands' |
-                ForEach-Object {
-                    Set-NoteVariable $_ |
-                        Invoke-Expression
-                }
-        }
+    $noteExecutions = [NoteExecution]::FromJson((git show $noteId))
 }
+
+function Invoke-NoteExecution {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [ApplicationStage] $Stage,
+
+        [Parameter()]
+        [NoteExecution[]] $Execution
+    )
+    process {
+        $stageExecutions = @($Execution |
+            Where-Object -Property Stage -EQ $Stage)
+        if ($stageExecutions.Length -eq 0) {
+            return
+        }
+
+        Write-Output "Invoking $Stage notes executions."
+        $stageExecutions |
+            ForEach-Object {
+                Write-Output $_.Display
+                $_.Commands |
+                    ForEach-Object {
+                        $_ |
+                            Invoke-Expression
+                    }
+
+                Write-Output ''
+            }
+    }
+}
+
+Write-Output "Picking '$message'."
+git cherry-pick $id
+Write-Output ''
+Invoke-NoteExecution -Stage ([ApplicationStage]::Pick) -Execution $noteExecutions
+
+Write-Output "Replacing tokens."
+& "$PSScriptRoot/replace-tokens.ps1" -TokenPath $TokenPath
+Write-Output ''
+Invoke-NoteExecution -Stage ([ApplicationStage]::Replace) -Execution $noteExecutions
+
+Write-Output "Adding changes."
+git add .
+Write-Output ''
+Invoke-NoteExecution -Stage ([ApplicationStage]::Add) -Execution $noteExecutions
+
+Write-Output "Amending '$message' with token replacements."
+git commit --amend --no-edit
+Invoke-NoteExecution -Stage ([ApplicationStage]::Amend) -Execution $noteExecutions
 
 $newCommitMatchLine = "*$($nextCommitMatch.Value.Substring(1))"
 $todoLines -replace $nextCommitMatch.Value, $newCommitMatchLine |
