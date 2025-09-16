@@ -12,10 +12,12 @@ The path of the file to resolve conflicts for. Supports glob patterns and
 restricts matches to a single file.
 
 .PARAMETER Ours
-The comma-separated line indexes to use from the ours conflict block.
+The comma-separated line indexes or index ranges to use from the ours conflict
+block.
 
 .PARAMETER Theirs
-The comma-separated line indexes to use from the theirs conflict block.
+The comma-separated line indexes or index ranges to use from the theirs conflict
+block.
 #>
 
 [CmdletBinding()]
@@ -39,34 +41,86 @@ if ($items.Length -eq 0) {
     throw "Unable to resolve conflicts for multiple items: $itemsDisplay."
 }
 
-$file = $items[0]
+class IndexRange {
+    [int] $Start
+    [int] $End
 
-function Test-ConflictSpecification {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)]
-        [string] $Name,
-
-        [Parameter()]
-        [string] $Text
-    )
-    begin {
-        $commaSeparatedNumbersPattern = '^\d+(,\d+)*$'
-        $errorFormat = 'The {0} parameter must contain comma-separated numbers, but instead has ''{1}''.'
+    IndexRange([int] $start, [int] $end) {
+        $this.Start = $start
+        $this.End = $end
     }
-    process {
-        if (-not $Text) {
-            return
+
+    static [IndexRange] FromText([string] $text) {
+        $values = $text -split '-'
+        if ($values.Length -gt 2) {
+            throw "The range '$text' may contain only a single hyphen."
         }
 
-        if (-not ($Text -match $commaSeparatedNumbersPattern)) {
-            throw $errorFormat -f $Name, $Text
+        $startSegment = $values[0]
+        $startValue = $startSegment -as [int]
+        if ($null -eq $startValue) {
+            throw "The start segment '$startSegment' on the range '$text' must be an integer."
         }
+
+        if ($values.Length -eq 1) {
+            return [IndexRange]::new($startValue, $startValue)
+        }
+
+        $endSegment = $values[1]
+        $endValue = $endSegment -as [int]
+        if ($null -eq $endValue) {
+            throw "The end segment '$endSegment' on the range '$text' must be an integer."
+        }
+
+        if ($startValue -gt $endValue) {
+            throw "The start segment must be less than the end segment on the range '$text'."
+        }
+
+        return [IndexRange]::new($startValue, $endValue)
     }
 }
 
-Test-ConflictSpecification -Name 'Ours' -Text $Ours
-Test-ConflictSpecification -Name 'Theirs' -Text $Theirs
+class ConflictSpecification {
+    [IndexRange[]] $Ranges
+    [int[]] $Indexes
+
+    ConflictSpecification([IndexRange[]] $ranges) {
+        $this.Ranges = $ranges
+        $this.Indexes = $ranges |
+            ForEach-Object {
+                $rangeIndexes = @()
+                for ($i = $_.Start; $i -le $_.End; $i++) {
+                    $rangeIndexes += $i
+                }
+
+                $rangeIndexes
+            } |
+            Select-Object -Unique |
+            Sort-Object
+    }
+
+    static [ConflictSpecification] FromCsv([string] $csv) {
+        if (-not $csv) {
+            return [ConflictSpecification]::new(@())
+        }
+
+        if (-not ($csv -match '^(\d+(-\d+)?)(,(\d+(-\d+)?))*$')) {
+            throw "The conflict specification '$csv' must be a comma-separated list of index ranges."
+        }
+
+        $indexRanges = $csv -split ',' |
+            ForEach-Object {
+                [IndexRange]::FromText($_)
+            }
+
+        return [ConflictSpecification]::new($indexRanges)
+    }
+}
+
+$file = $items[0]
+
+$oursConflictSpecification = [ConflictSpecification]::FromCsv($Ours)
+$theirsConflictSpecification = [ConflictSpecification]::FromCsv($Theirs)
 
 enum MarkerScan {
     Ours
@@ -136,28 +190,23 @@ function Read-ConflictSpecification {
     [CmdletBinding()]
     [OutputType([string[]])]
     param(
-        [Parameter()]
-        [string[]] $Line,
+        [Parameter(Mandatory)]
+        [ConflictSpecification] $Specification,
 
         [Parameter()]
-        [string] $Text
+        [string[]] $Line
     )
     begin {
         $lines = @($Line)
     }
     process {
-        if (-not $Text) {
+        if ($Specification.Ranges.Length -eq 0) {
             return @()
         }
 
-        $indexes = $Text -split ',' |
-            ForEach-Object {
-                [int]::Parse($_)
-            }
-
         $selectedLines = @()
         for ($i = 0; $i -lt $lines.Length; $i++) {
-            if ($i -in $indexes) {
+            if ($i -in $Specification.Indexes) {
                 $selectedLines += ,$lines[$i]
             }
         }
@@ -166,8 +215,8 @@ function Read-ConflictSpecification {
     }
 }
 
-$oursLines = Read-ConflictSpecification -Line $oursLines -Text $Ours
-$theirsLines = Read-ConflictSpecification -Line $theirsLines -Text $Theirs
+$oursLines = Read-ConflictSpecification -Specification $oursConflictSpecification -Line $oursLines
+$theirsLines = Read-ConflictSpecification -Specification $theirsConflictSpecification -Line $theirsLines
 
 @($beforeLines) + @($oursLines) + @($theirsLines) + @($afterLines) |
     Set-Content -Path $file
