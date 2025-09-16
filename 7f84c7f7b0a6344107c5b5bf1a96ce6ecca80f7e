@@ -1,0 +1,11 @@
+{
+  "executions": [
+    {
+      "display": "Creating license.",
+      "stage": "Replace",
+      "commands": [
+        "$repository/.template/scripts/add-license.ps1"
+      ]
+    }
+  ]
+}

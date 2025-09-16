@@ -1,0 +1,18 @@
+{
+  "executions": [
+    {
+      "display": "Resolving solution conflict.",
+      "stage": "Pick",
+      "commands": [
+        "$repository/.template/scripts/resolve-conflict.ps1 -Path *.slnx -Ours 0 -Theirs 1"
+      ]
+    },
+    {
+      "display": "Continuing cherry-pick.",
+      "stage": "Add",
+      "commands": [
+        "git cherry-pick --continue --no-edit"
+      ]
+    }
+  ]
+}
