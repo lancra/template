@@ -55,7 +55,7 @@ class TokenResult {
 }
 
 if ($File.Length -eq 0) {
-    $File = @(& git show --pretty="" --name-only)
+    $File = @(& git diff --name-only --staged)
 }
 
 if (-not (Test-Path -Path $TokenPath)) {

@@ -85,7 +85,7 @@ enum ApplicationStage {
     Pick
     Replace
     Add
-    Amend
+    Commit
 }
 
 class NoteExecution {
@@ -153,7 +153,7 @@ function Invoke-NoteExecution {
 }
 
 Write-Output "Picking '$message'."
-git cherry-pick $id
+git cherry-pick --no-commit $id
 Write-Output ''
 Invoke-NoteExecution -Stage ([ApplicationStage]::Pick) -Execution $noteExecutions
 
@@ -167,9 +167,9 @@ git add .
 Write-Output ''
 Invoke-NoteExecution -Stage ([ApplicationStage]::Add) -Execution $noteExecutions
 
-Write-Output "Amending '$message' with token replacements."
-git commit --amend --no-edit
-Invoke-NoteExecution -Stage ([ApplicationStage]::Amend) -Execution $noteExecutions
+Write-Output "Committing '$message'."
+git commit --message "$message"
+Invoke-NoteExecution -Stage ([ApplicationStage]::Commit) -Execution $noteExecutions
 
 $newCommitMatchLine = "*$($nextCommitMatch.Value.Substring(1))"
 $todoLines -replace $nextCommitMatch.Value, $newCommitMatchLine |
