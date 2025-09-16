@@ -79,6 +79,8 @@ $tokenSpecification.static.PSObject.Properties |
         $tokenResults["__$($_.Name)__"] = $result
     }
 
+$tokenPattern = '__(?=[A-Z])[A-Z_].*(?<!_)__'
+
 function Set-Tokens {
     [CmdletBinding()]
     [OutputType([string])]
@@ -93,7 +95,6 @@ function Set-Tokens {
         [int] $Line
     )
     begin {
-        $tokenPattern = '__(?=[A-Z])[A-Z_]+__'
         $indexDifference = 0
     }
     process {
@@ -119,7 +120,6 @@ function Set-Tokens {
     }
 }
 
-$tokenPattern = '__(?=[A-Z])[A-Z_]+__'
 $File |
     ForEach-Object {
         $path = $_
