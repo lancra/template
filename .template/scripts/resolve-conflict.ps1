@@ -4,20 +4,20 @@ Resolves the first conflict for a file.
 
 .DESCRIPTION
 Scans the matched file for conflict markers, extracting the lines from the ours
-and theirs blocks. The indexes provided for each are used to filter the
-extracted lines, and the results are used to replace the full conflict section.
+and theirs blocks. The specification is applied in the provided order, producing
+the collection of selected lines. These lines are then used to replace the full
+conflict section.
 
 .PARAMETER Path
 The path of the file to resolve conflicts for. Supports glob patterns and
 restricts matches to a single file.
 
-.PARAMETER Ours
-The comma-separated line indexes or index ranges to use from the ours conflict
-block.
-
-.PARAMETER Theirs
-The comma-separated line indexes or index ranges to use from the theirs conflict
-block.
+.PARAMETER Specification
+The specification of indexes or index ranges to select from the target conflict
+section. This is made up of one or many segments prefixed with the target symbol
+and suffixed with the index or index range. The "<" symbol represents the ours
+block and the ">" symbol represents the theirs block. If no specification is
+provided, the full conflict section is removed from the file.
 #>
 
 [CmdletBinding()]
@@ -26,10 +26,7 @@ param(
     [string] $Path,
 
     [Parameter()]
-    [string] $Ours,
-
-    [Parameter()]
-    [string] $Theirs
+    [string] $Specification
 )
 
 $items = @(Get-Item -Path $Path)
@@ -41,86 +38,131 @@ if ($items.Length -eq 0) {
     throw "Unable to resolve conflicts for multiple items: $itemsDisplay."
 }
 
+enum IndexRangeTarget {
+    Ours
+    Theirs
+}
+
+$script:rangeGroupName = 'range'
+$script:rangesPattern = "(?<$rangeGroupName>[<>]\d(-\d)?)"
+
 class IndexRange {
+    [IndexRangeTarget] $Target
     [int] $Start
     [int] $End
 
-    IndexRange([int] $start, [int] $end) {
+    IndexRange([IndexRangeTarget] $target, [int] $start, [int] $end) {
+        $this.Target = $target
         $this.Start = $start
         $this.End = $end
     }
 
     static [IndexRange] FromText([string] $text) {
-        $values = $text -split '-'
-        if ($values.Length -gt 2) {
-            throw "The range '$text' may contain only a single hyphen."
+        if (-not ($text -match $script:rangesPattern)) {
+            throw "The range '$text' is invalid."
         }
 
-        $startSegment = $values[0]
-        $startValue = $startSegment -as [int]
-        if ($null -eq $startValue) {
-            throw "The start segment '$startSegment' on the range '$text' must be an integer."
+        $rangeTargetCharacter = $text[0]
+        $targetValue = switch ($rangeTargetCharacter) {
+            '<' { [IndexRangeTarget]::Ours }
+            '>' { [IndexRangeTarget]::Theirs }
+            default { throw "The target on the range '$text' is unrecognized." }
         }
+
+        $values = $text.Substring(1) -split '-'
+
+        $startValue = [int]$values[0]
 
         if ($values.Length -eq 1) {
-            return [IndexRange]::new($startValue, $startValue)
+            return [IndexRange]::new($targetValue, $startValue, $startValue)
         }
 
-        $endSegment = $values[1]
-        $endValue = $endSegment -as [int]
-        if ($null -eq $endValue) {
-            throw "The end segment '$endSegment' on the range '$text' must be an integer."
-        }
+        $endValue = [int]$values[1]
 
         if ($startValue -gt $endValue) {
-            throw "The start segment must be less than the end segment on the range '$text'."
+            throw "The start value must be less than the end value on the range '$text'."
         }
 
-        return [IndexRange]::new($startValue, $endValue)
+        return [IndexRange]::new($targetValue, $startValue, $endValue)
     }
 }
 
 class ConflictSpecification {
     [IndexRange[]] $Ranges
-    [int[]] $Indexes
 
     ConflictSpecification([IndexRange[]] $ranges) {
         $this.Ranges = $ranges
-        $this.Indexes = $ranges |
-            ForEach-Object {
-                $rangeIndexes = @()
-                for ($i = $_.Start; $i -le $_.End; $i++) {
-                    $rangeIndexes += $i
-                }
-
-                $rangeIndexes
-            } |
-            Select-Object -Unique |
-            Sort-Object
     }
 
-    static [ConflictSpecification] FromCsv([string] $csv) {
-        if (-not $csv) {
+    static [ConflictSpecification] FromText([string] $text) {
+        if (-not $text) {
             return [ConflictSpecification]::new(@())
         }
 
-        if (-not ($csv -match '^(\d+(-\d+)?)(,(\d+(-\d+)?))*$')) {
-            throw "The conflict specification '$csv' must be a comma-separated list of index ranges."
+        $indexRangeGroups = $text |
+            Select-String -AllMatches -Pattern $script:rangesPattern |
+            Select-Object -ExpandProperty Matches |
+            Select-Object -ExpandProperty Groups |
+            Where-Object -Property Name -EQ $script:rangeGroupName
+        $matchedLength = $indexRangeGroups |
+            Measure-Object -Property Length -Sum |
+            Select-Object -ExpandProperty Sum
+        if ($matchedLength -lt $text.Length) {
+            [ConflictSpecification]::WriteMatchError($text, $indexRangeGroups)
         }
 
-        $indexRanges = $csv -split ',' |
+        $indexRanges = $indexRangeGroups |
             ForEach-Object {
-                [IndexRange]::FromText($_)
+                [IndexRange]::FromText($_.Value)
             }
 
         return [ConflictSpecification]::new($indexRanges)
     }
+
+    hidden static [void] WriteMatchError([string] $text, [System.Text.RegularExpressions.Group[]] $groups) {
+        $matchedIndexes = $groups |
+            ForEach-Object {
+                $groupIndexes = @()
+                for ($i = $_.Index; $i -lt ($_.Index + $_.Length); $i++) {
+                    $groupIndexes += $i
+                }
+
+                return $groupIndexes
+            }
+
+        $underlineStartCode = "`e[4m"
+        $underlineEndCode = "`e[24m"
+        $errorBuilder = [System.Text.StringBuilder]::new()
+        [void]$errorBuilder.Append("The conflict specification text '")
+
+        $wasMatchedIndex = $false
+        for ($i = 0; $i -lt $text.Length; $i++) {
+            $isMatchedIndex = $i -in $matchedIndexes
+            if ($isMatchedIndex -and -not $wasMatchedIndex) {
+                [void]$errorBuilder.Append($underlineStartCode)
+                $wasMatchedIndex = $true
+            }
+
+            if (-not $isMatchedIndex -and $wasMatchedIndex) {
+                [void]$errorBuilder.Append($underlineEndCode)
+                $wasMatchedIndex = $false
+            }
+
+            [void]$errorBuilder.Append($text[$i])
+        }
+
+        if ($wasMatchedIndex) {
+            [void]$errorBuilder.Append($underlineEndCode)
+        }
+
+        [void]$errorBuilder.Append("' was not fully matched.")
+        $conflictSpecificationMatchError = $errorBuilder.ToString()
+        throw $conflictSpecificationMatchError
+    }
 }
 
 $file = $items[0]
-
-$oursConflictSpecification = [ConflictSpecification]::FromCsv($Ours)
-$theirsConflictSpecification = [ConflictSpecification]::FromCsv($Theirs)
+$conflictSpecification = [ConflictSpecification]::FromText($Specification)
 
 enum MarkerScan {
     Ours
@@ -186,37 +228,12 @@ Get-Content -Path $file |
         }
     }
 
-function Read-ConflictSpecification {
-    [CmdletBinding()]
-    [OutputType([string[]])]
-    param(
-        [Parameter(Mandatory)]
-        [ConflictSpecification] $Specification,
-
-        [Parameter()]
-        [string[]] $Line
-    )
-    begin {
-        $lines = @($Line)
+$selectedLines = @()
+$conflictSpecification.Ranges |
+    ForEach-Object {
+        $sourceLines = $_.Target -eq [IndexRangeTarget]::Ours ? $oursLines : $theirsLines
+        $selectedLines += ,$sourceLines[($_.Start)..($_.End)]
     }
-    process {
-        if ($Specification.Ranges.Length -eq 0) {
-            return @()
-        }
 
-        $selectedLines = @()
-        for ($i = 0; $i -lt $lines.Length; $i++) {
-            if ($i -in $Specification.Indexes) {
-                $selectedLines += ,$lines[$i]
-            }
-        }
-
-        return $selectedLines
-    }
-}
-
-$oursLines = Read-ConflictSpecification -Specification $oursConflictSpecification -Line $oursLines
-$theirsLines = Read-ConflictSpecification -Specification $theirsConflictSpecification -Line $theirsLines
-
-@($beforeLines) + @($oursLines) + @($theirsLines) + @($afterLines) |
+@($beforeLines) + @($selectedLines) + @($afterLines) |
     Set-Content -Path $file
