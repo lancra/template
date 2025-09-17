@@ -4,14 +4,7 @@
       "display": "Resolving solution conflict.",
       "stage": "Pick",
       "commands": [
-        "$repository/.template/scripts/resolve-conflict.ps1 -Path Directory.Packages.props -Theirs 0-2"
-      ]
-    },
-    {
-      "display": "Continuing cherry-pick.",
-      "stage": "Add",
-      "commands": [
-        "git cherry-pick --continue --no-edit"
+        "$repository/.template/scripts/resolve-conflict.ps1 -Path Directory.Packages.props -Specification '>0<0>2'"
       ]
     }
   ]
