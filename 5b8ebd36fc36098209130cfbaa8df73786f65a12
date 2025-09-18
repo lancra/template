@@ -1,7 +1,7 @@
 {
   "executions": [
     {
-      "display": "Resolving solution conflict.",
+      "display": "Resolving global packages conflict.",
       "stage": "Pick",
       "commands": [
         "$repository/.template/scripts/resolve-conflict.ps1 -Path Directory.Packages.props -Specification '>0<0>2'"
