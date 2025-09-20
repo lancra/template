@@ -1,0 +1,11 @@
+{
+  "executions": [
+    {
+      "display": "Resolving solution conflict.",
+      "stage": "Pick",
+      "commands": [
+        "$repository/.template/scripts/resolve-conflict.ps1 -Path *.slnx -Specification '<0>1'"
+      ]
+    }
+  ]
+}
