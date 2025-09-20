@@ -1,9 +1,6 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
+  "$schema": "https://json-schema.org/draft-07/schema#",
   "$id": "https://raw.githubusercontent.com/lancra/template/main/.template/tokens.schema.json",
-  "title": "Template Application Specification",
-  "description": "The specification used to apply a template to a target repository.",
-  "type": "object",
   "definitions": {
     "generatedToken": {
       "title": "Generated Template Token Definition",
@@ -15,16 +12,10 @@
           "type": "string",
           "format": "file-path",
           "minLength": 1
-        },
-        "description": {
-          "description": "The description of the token usage and format.",
-          "type": "string",
-          "minLength": 1
         }
       },
       "required": [
-        "generator",
-        "description"
+        "generator"
       ]
     },
     "staticToken": {
@@ -37,11 +28,6 @@
           "type": "string",
           "minLength": 1
         },
-        "description": {
-          "description": "The description of the token usage and format.",
-          "type": "string",
-          "minLength": 1
-        },
         "example": {
           "description": "The sample value to show usage of the token within the template.",
           "type": "string",
@@ -50,29 +36,71 @@
       },
       "required": [
         "value",
-        "description",
         "example"
+      ]
+    },
+    "token": {
+      "title": "Template Token Definition",
+      "description": "",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "The description of the token usage and format.",
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "description": "The kind of template token.",
+          "type": "string",
+          "enum": [
+            "generated",
+            "static"
+          ],
+          "default": "static"
+        }
+      },
+      "required": [
+        "description",
+        "kind"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "generated"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/generatedToken"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "static"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/staticToken"
+          }
+        }
       ]
     }
   },
+  "title": "Template Application Specification",
+  "description": "The specification used to apply a template to a target repository.",
+  "type": "object",
   "properties": {
-    "generated": {
-      "description": "The generated token definitions used for replacement when applying a template.",
+    "tokens": {
+      "description": "The token definitions used for replacement when applying a template.",
       "type": "object",
       "patternProperties": {
         "^(?=[A-Z])[A-Z_].*(?<!_)$": {
-          "$ref": "#/definitions/generatedToken"
-        }
-      },
-      "additionalProperties": false,
-      "minProperties": 1
-    },
-    "static": {
-      "description": "The static token definitions used for replacement when applying a template.",
-      "type": "object",
-      "patternProperties": {
-        "^(?=[A-Z])[A-Z_].*(?<!_)$": {
-          "$ref": "#/definitions/staticToken"
+          "$ref": "#/definitions/token"
         }
       },
       "additionalProperties": false,
@@ -80,7 +108,6 @@
     }
   },
   "required": [
-    "generated",
-    "static"
+    "tokens"
   ]
 }

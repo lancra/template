@@ -26,31 +26,31 @@ param(
     [string[]] $File
 )
 
-enum TokenType {
+enum TokenKind {
     Generated
     Static
 }
 
 class TokenResult {
     [string] $Text
-    [TokenType] $Type
+    [TokenKind] $Kind
 
-    TokenResult([string] $text, [TokenType] $type) {
+    TokenResult([string] $text, [TokenKind] $kind) {
         $this.Text = $text
-        $this.Type = $type
+        $this.Kind = $kind
     }
 
     [string] GetValue([string] $path, [string] $text, [int] $line) {
-        if ($this.Type -eq [TokenType]::Generated) {
+        if ($this.Kind -eq [TokenKind]::Generated) {
             $value = & "$PSScriptRoot/$($this.Text)" -Path $path -Text $text -Line $line
             return $value
         }
 
-        if ($this.Type -eq [TokenType]::Static) {
+        if ($this.Kind -eq [TokenKind]::Static) {
             return $this.Text
         }
 
-        throw "Unknown token type $($this.Type)."
+        throw "Unknown token kind $($this.Kind)."
     }
 }
 
@@ -67,15 +67,11 @@ $tokenSpecification = Get-Content -Path $TokenPath |
 
 $tokenResults = @{}
 
-$tokenSpecification.generated.PSObject.Properties |
+$tokenSpecification.tokens.PSObject.Properties |
     ForEach-Object {
-        $result = [TokenResult]::new($_.Value.generator, [TokenType]::Generated)
-        $tokenResults["__$($_.Name)__"] = $result
-    }
-
-$tokenSpecification.static.PSObject.Properties |
-    ForEach-Object {
-        $result = [TokenResult]::new($_.Value.value, [TokenType]::Static)
+        $kind = [TokenKind]$_.Value.kind
+        $text = $kind -eq [TokenKind]::Static ? $_.Value.value : $_.Value.generator
+        $result = [TokenResult]::new($text, $kind)
         $tokenResults["__$($_.Name)__"] = $result
     }
 

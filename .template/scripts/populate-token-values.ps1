@@ -23,10 +23,14 @@ if (-not (Test-Path -Path $TokenPath)) {
 $tokenSpecification = Get-Content -Path $TokenPath |
     ConvertFrom-Json
 
-$tokenSpecification.static.PSObject.Properties |
+$tokenSpecification.tokens.PSObject.Properties |
     Select-Object -ExpandProperty Name |
     ForEach-Object {
-        $tokenSpecification.static.$_.value = Read-Host -Prompt "$_ ($($tokenSpecification.static.$_.description))"
+        if ($tokenSpecification.tokens.$_.kind -ne 'static') {
+            return
+        }
+
+        $tokenSpecification.tokens.$_.value = Read-Host -Prompt "$_ ($($tokenSpecification.tokens.$_.description))"
     }
 
 $tokenSpecification |

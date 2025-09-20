@@ -12,8 +12,8 @@ source.
 .PARAMETER TokenPath
 The source template specification to add a token definition to.
 
-.PARAMETER Type
-The type of template token to add.
+.PARAMETER Kind
+The kind of template token to add.
 
 .PARAMETER Key
 The unique token key to add. If this is not provided, the user is prompted for
@@ -31,7 +31,7 @@ param(
 
     [Parameter(Mandatory)]
     [ValidateSet('Generated', 'Static')]
-    [string] $Type,
+    [string] $Kind,
 
     [Parameter()]
     [string] $Key,
@@ -40,8 +40,8 @@ param(
     [string] $Description
 )
 
-$generatedTokenType = 'Generated'
-$staticTokenType = 'Static'
+$generatedTokenKind = 'Generated'
+$staticTokenKind = 'Static'
 
 if (-not (Test-Path -Path $TokenPath)) {
     throw "The token specification was not found at '$TokenPath'."
@@ -76,7 +76,7 @@ if (-not ($Key -match '^(?=[A-Z])[A-Z_].*(?<!_)$')) {
         'Keys can only contain uppercase letters and underscores, and must begin and end with a letter.'
 }
 
-$currentKeys = @($tokenSpecification.generated.PSObject.Properties) + @($tokenSpecification.static.PSObject.Properties) |
+$currentKeys = @($tokenSpecification.tokens.PSObject.Properties) |
     Select-Object -ExpandProperty Name
 $isDuplicateKey = ($currentKeys |
     Where-Object { $_ -eq $Key } |
@@ -88,7 +88,11 @@ if ($isDuplicateKey) {
 
 $Description = Read-PropertyValue -Name 'Description' -Value $Description
 
-if ($Type -eq $generatedTokenType) {
+$tokenDefinition = [pscustomobject]@{
+    description = $Description
+    kind = $Kind
+}
+if ($Kind -eq $generatedTokenKind) {
     $generator = Read-PropertyValue -Name 'Generator'
 
     $generatorRelativePath = "generators/$generator"
@@ -97,46 +101,32 @@ if ($Type -eq $generatedTokenType) {
         throw "The provided generator was not found at '$generatorAbsolutePath'."
     }
 
-    $tokenDefinition = [pscustomobject]@{
-        generator = "./$generatorRelativePath"
-        description = $Description
-    }
+    $tokenDefinition |
+        Add-Member -MemberType NoteProperty -Name 'generator' -Value "./$generatorRelativePath"
+} elseif ($Kind -eq $staticTokenKind) {
+    $tokenDefinition |
+        Add-Member -MemberType NoteProperty -Name 'value' -Value $Key
 
-    $tokenSpecification.generated |
-        Add-Member -MemberType NoteProperty -Name $Key -Value $tokenDefinition
-} elseif ($Type -eq $staticTokenType) {
     $example = Read-PropertyValue -Name 'Example'
 
-    $tokenDefinition = [pscustomobject]@{
-        value = $Key
-        description = $Description
-        example = $example
-    }
-
-    $tokenSpecification.static |
-        Add-Member -MemberType NoteProperty -Name $Key -Value $tokenDefinition
+    $tokenDefinition |
+        Add-Member -MemberType NoteProperty -Name 'example' -Value $example
 }
+
+$tokenSpecification.tokens |
+        Add-Member -MemberType NoteProperty -Name $Key -Value $tokenDefinition
 
 $newTokenSpecification = [pscustomobject]@{
     '$schema' = $tokenSpecification.'$schema'
-    generated = [pscustomobject]@{}
-    static = [pscustomobject]@{}
+    tokens = [pscustomobject]@{}
 }
 
-$tokenSpecification.generated.PSObject.Properties |
+$tokenSpecification.tokens.PSObject.Properties |
     Select-Object -ExpandProperty Name |
     Sort-Object |
     ForEach-Object {
-        $newTokenSpecification.generated |
-            Add-Member -MemberType NoteProperty -Name $_ -Value $tokenSpecification.generated.$_
-    }
-
-$tokenSpecification.static.PSObject.Properties |
-    Select-Object -ExpandProperty Name |
-    Sort-Object |
-    ForEach-Object {
-        $newTokenSpecification.static |
-            Add-Member -MemberType NoteProperty -Name $_ -Value $tokenSpecification.static.$_
+        $newTokenSpecification.tokens |
+            Add-Member -MemberType NoteProperty -Name $_ -Value $tokenSpecification.tokens.$_
     }
 
 $newTokenSpecification |
