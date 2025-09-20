@@ -6,14 +6,14 @@ Cleans up traces of the template process from the current repository.
 Removes the template remote, the TODO file with its ignore entry, and the cloned
 template repository.
 
-.PARAMETER RepositoryPath
+.PARAMETER Repository
 The path of the template repository.
 #>
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string] $RepositoryPath
+    [string] $Repository
 )
 
 Write-Output "Removing template remote from current repository."
@@ -38,7 +38,7 @@ $newIgnoreLines = Get-Content -Path $localIgnoreFile |
 Set-Content -Path $localIgnoreFile -Value $newIgnoreLines
 
 Write-Output "Removing template repository."
-Remove-Item -Path $RepositoryPath -Recurse -Force
+Remove-Item -Path $Repository -Recurse -Force
 
 Write-Output "Performing Git garbage collection."
 git gc --prune=now
