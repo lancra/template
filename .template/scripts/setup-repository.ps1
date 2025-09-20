@@ -7,7 +7,7 @@ Retrieves the target branches from template repository, sets up the template
 repository as a remote on the current repository, and extracts the template
 specification to a location.
 
-.PARAMETER RepositoryPath
+.PARAMETER Repository
 The path of the template repository.
 
 .PARAMETER Specification
@@ -20,7 +20,7 @@ The target template to apply.
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string] $RepositoryPath,
+    [string] $Repository,
 
     [Parameter(Mandatory)]
     [string] $Specification,
@@ -34,7 +34,7 @@ if (-not $inRepositoryRoot) {
     throw "Repository setup must be executed from the repository root."
 }
 
-$isTemplateRepositoryRoot = Test-Path -Path "$RepositoryPath/.git"
+$isTemplateRepositoryRoot = Test-Path -Path "$Repository/.git"
 if (-not $isTemplateRepositoryRoot) {
     throw "The provided repository path must be the root of the template repository."
 }
@@ -45,20 +45,20 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Output "Fetching notes for template repository."
-git -C $RepositoryPath fetch origin refs/notes/*:refs/notes/*
+git -C $Repository fetch origin refs/notes/*:refs/notes/*
 Write-Output ''
 
 Write-Output "Creating local template branches for '$Template'."
-git -C $RepositoryPath branch --track "base-$Template" "origin/base-$Template"
-git -C $RepositoryPath branch --track "$Template" "origin/$Template"
+git -C $Repository branch --track "base-$Template" "origin/base-$Template"
+git -C $Repository branch --track "$Template" "origin/$Template"
 Write-Output ''
 
 Write-Output "Switching to target template branch."
-git -C $RepositoryPath switch "$Template"
+git -C $Repository switch "$Template"
 Write-Output ''
 
 Write-Output "Adding template remote to current repository."
-git remote add template $RepositoryPath
+git remote add template $Repository
 git remote update template
 Write-Output ''
 

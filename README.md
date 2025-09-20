@@ -21,7 +21,7 @@ This repository provides various templates for new Git repositories.
 1. Setup current repository.
 
    ```powershell
-   & "$repository/.template/scripts/setup-repository.ps1" -RepositoryPath $repository -Specification $specification -Template $template
+   & "$repository/.template/scripts/setup-repository.ps1" -Repository $repository -Specification $specification -Template $template
    ```
 
 1. Populate token values in the copied specification.
@@ -39,5 +39,5 @@ This repository provides various templates for new Git repositories.
 1. Remove remnants of the template process.
 
    ```powershell
-   & "$repository/.template/scripts/cleanup.ps1" -RepositoryPath $repository
+   & "$repository/.template/scripts/cleanup.ps1" -Repository $repository
    ```
