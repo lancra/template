@@ -32,11 +32,16 @@
           "description": "The sample value to show usage of the token within the template.",
           "type": "string",
           "minLength": 1
+        },
+        "default": {
+          "description": "Whether to use the example value as the default when none is provided.",
+          "type": "boolean"
         }
       },
       "required": [
         "value",
-        "example"
+        "example",
+        "default"
       ]
     },
     "token": {

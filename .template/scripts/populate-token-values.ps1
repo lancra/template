@@ -26,11 +26,28 @@ $tokenSpecification = Get-Content -Path $TokenPath |
 $tokenSpecification.tokens.PSObject.Properties |
     Select-Object -ExpandProperty Name |
     ForEach-Object {
-        if ($tokenSpecification.tokens.$_.kind -ne 'static') {
+        $token = $tokenSpecification.tokens.$_
+        if ($token.kind -ne 'static') {
             return
         }
 
-        $tokenSpecification.tokens.$_.value = Read-Host -Prompt "$_ ($($tokenSpecification.tokens.$_.description))"
+        $examplePrefix = $token.default ? 'default' : 'e.g.'
+        $prompt = "${_}:`n$($token.description) ($examplePrefix '$($token.example)')"
+        $userInput = ''
+        while (-not $userInput) {
+            $userInput = Read-Host -Prompt $prompt
+
+            if (-not $userInput) {
+                if ($token.default) {
+                    $userInput = $token.example
+                } else {
+                    Write-Output "`e[33mPlease provide a value.`e[39m"
+                }
+            }
+        }
+
+        $tokenSpecification.tokens.$_.value = $userInput
+        Write-Output ''
     }
 
 $tokenSpecification |
