@@ -9,7 +9,7 @@ source specification. The modified lines are then written back to the target
 file. Finally, the file name itself is checked for tokens, and if found, they
 are replaced and the file is renamed.
 
-.PARAMETER TokenPath
+.PARAMETER Specification
 The source template specification to replace tokens with.
 
 .PARAMETER File
@@ -20,7 +20,7 @@ are used.
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string] $TokenPath,
+    [string] $Specification,
 
     [Parameter()]
     [string[]] $File
@@ -58,16 +58,16 @@ if ($File.Length -eq 0) {
     $File = @(& git diff --name-only --staged)
 }
 
-if (-not (Test-Path -Path $TokenPath)) {
-    throw "The token specification was not found at '$TokenPath'."
+if (-not (Test-Path -Path $Specification)) {
+    throw "The template specification was not found at '$Specification'."
 }
 
-$tokenSpecification = Get-Content -Path $TokenPath |
+$specificationInstance = Get-Content -Path $Specification |
     ConvertFrom-Json
 
 $tokenResults = @{}
 
-$tokenSpecification.tokens.PSObject.Properties |
+$specificationInstance.tokens.PSObject.Properties |
     ForEach-Object {
         $kind = [TokenKind]$_.Value.kind
         $text = $kind -eq [TokenKind]::Static ? $_.Value.value : $_.Value.generator

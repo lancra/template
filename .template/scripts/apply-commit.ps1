@@ -8,14 +8,14 @@ without an indicator is cherry-picked into the repository, the provided tokens
 are replaced into it, and any notes executions are run. Finally, the indicator
 is added to the applied commit in the TODO file.
 
-.PARAMETER TokenPath
-The location of the specification to use for token replacement.
+.PARAMETER Specification
+The location of the template specification to use.
 #>
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string] $TokenPath
+    [string] $Specification
 )
 
 $status = git status --short
@@ -30,8 +30,8 @@ if (-not $inRepositoryRoot) {
     throw "Template commits must be applied from the repository root."
 }
 
-if (-not (Test-Path -Path $TokenPath)) {
-    throw "The provided token source '$TokenPath' could not be found."
+if (-not (Test-Path -Path $Specification)) {
+    throw "The template specification was not found at '$Specification'."
 }
 
 $todoLines = Get-Content -Path $todoFile
@@ -158,7 +158,7 @@ Write-Output ''
 Invoke-NoteExecution -Stage ([ApplicationStage]::Pick) -Execution $noteExecutions
 
 Write-Output "Replacing tokens."
-& "$PSScriptRoot/replace-tokens.ps1" -TokenPath $TokenPath
+& "$PSScriptRoot/replace-tokens.ps1" -Specification $Specification
 Write-Output ''
 Invoke-NoteExecution -Stage ([ApplicationStage]::Replace) -Execution $noteExecutions
 

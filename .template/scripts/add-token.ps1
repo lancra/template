@@ -9,7 +9,7 @@ The token definition is then added to the specification, and the new set of
 tokens is sorted alphabetically before writing the new specification back to the
 source.
 
-.PARAMETER TokenPath
+.PARAMETER Specification
 The source template specification to add a token definition to.
 
 .PARAMETER Kind
@@ -27,7 +27,7 @@ provided, the user is prompted for it at run-time.
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string] $TokenPath,
+    [string] $Specification,
 
     [Parameter(Mandatory)]
     [ValidateSet('Generated', 'Static')]
@@ -43,8 +43,8 @@ param(
 $generatedTokenKind = 'Generated'
 $staticTokenKind = 'Static'
 
-if (-not (Test-Path -Path $TokenPath)) {
-    throw "The token specification was not found at '$TokenPath'."
+if (-not (Test-Path -Path $Specification)) {
+    throw "The template specification was not found at '$Specification'."
 }
 
 function Read-PropertyValue {
@@ -66,7 +66,7 @@ function Read-PropertyValue {
     }
 }
 
-$tokenSpecification = Get-Content -Path $TokenPath |
+$specificationInstance = Get-Content -Path $Specification |
     ConvertFrom-Json
 
 $Key = Read-PropertyValue -Name 'Key' -Value $Key
@@ -76,7 +76,7 @@ if (-not ($Key -match '^(?=[A-Z])[A-Z_].*(?<!_)$')) {
         'Keys can only contain uppercase letters and underscores, and must begin and end with a letter.'
 }
 
-$currentKeys = @($tokenSpecification.tokens.PSObject.Properties) |
+$currentKeys = @($specificationInstance.tokens.PSObject.Properties) |
     Select-Object -ExpandProperty Name
 $isDuplicateKey = ($currentKeys |
     Where-Object { $_ -eq $Key } |
@@ -113,22 +113,22 @@ if ($Kind -eq $generatedTokenKind) {
         Add-Member -MemberType NoteProperty -Name 'example' -Value $example
 }
 
-$tokenSpecification.tokens |
+$specificationInstance.tokens |
         Add-Member -MemberType NoteProperty -Name $Key -Value $tokenDefinition
 
-$newTokenSpecification = [pscustomobject]@{
-    '$schema' = $tokenSpecification.'$schema'
+$newSpecificationInstance = [pscustomobject]@{
+    '$schema' = $specificationInstance.'$schema'
     tokens = [pscustomobject]@{}
 }
 
-$tokenSpecification.tokens.PSObject.Properties |
+$specificationInstance.tokens.PSObject.Properties |
     Select-Object -ExpandProperty Name |
     Sort-Object |
     ForEach-Object {
-        $newTokenSpecification.tokens |
-            Add-Member -MemberType NoteProperty -Name $_ -Value $tokenSpecification.tokens.$_
+        $newSpecificationInstance.tokens |
+            Add-Member -MemberType NoteProperty -Name $_ -Value $specificationInstance.tokens.$_
     }
 
-$newTokenSpecification |
+$newSpecificationInstance |
     ConvertTo-Json |
-    Set-Content -Path $TokenPath
+    Set-Content -Path $Specification
