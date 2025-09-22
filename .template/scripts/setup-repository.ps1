@@ -66,6 +66,9 @@ Write-Output "Fetching notes for template remote."
 git fetch template refs/notes/*:refs/notes/*
 Write-Output ''
 
+Write-Output "Disabling reuse of recorded resolutions in repository."
+git config set --local rerere.enabled false
+
 Write-Output "Extracting template specification to '$Specification'."
 git show "template/${Template}:.template/specification.json" > $Specification
 

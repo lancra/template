@@ -40,6 +40,9 @@ Set-Content -Path $localIgnoreFile -Value $newIgnoreLines
 Write-Output "Removing template repository."
 Remove-Item -Path $Repository -Recurse -Force
 
+Write-Output "Removing reuse of recorded resolutions configuration in repository."
+git config unset --local rerere.enabled
+
 Write-Output "Performing Git garbage collection."
 git gc --prune=now
 Write-Output ''
