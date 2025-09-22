@@ -2,6 +2,42 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "$id": "https://raw.githubusercontent.com/lancra/template/main/.template/specification.schema.json",
   "definitions": {
+    "execution": {
+      "title": "Template Application Execution",
+      "description": "The execution to invoke as part of the specified application stage.",
+      "type": "object",
+      "properties": {
+        "display": {
+          "description": "The message to display before invocation.",
+          "type": "string",
+          "minLength": 1
+        },
+        "stage": {
+          "description": "The application stage which precedes the invocation.",
+          "type": "string",
+          "enum": [
+            "pick",
+            "replace",
+            "add",
+            "commit"
+          ]
+        },
+        "commands": {
+          "description": "The commands to run as part of the execution.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "display",
+        "stage",
+        "commands"
+      ]
+    },
     "generatedToken": {
       "title": "Generated Template Token Definition",
       "description": "The definition of a replacement token, including the generated used to dynamically create the value.",
@@ -100,6 +136,14 @@
   "description": "The specification used to apply a template to a target repository.",
   "type": "object",
   "properties": {
+    "executions": {
+      "description": "The executions to invoke as part of every commit application.",
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "$ref": "#/definitions/execution"
+      }
+    },
     "tokens": {
       "description": "The token definitions used for replacement when applying a template.",
       "type": "object",
@@ -109,10 +153,11 @@
         }
       },
       "additionalProperties": false,
-      "minProperties": 1
+      "minProperties": 0
     }
   },
   "required": [
+    "executions",
     "tokens"
   ]
 }

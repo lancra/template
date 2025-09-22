@@ -51,5 +51,5 @@ $specificationInstance.tokens.PSObject.Properties |
     }
 
 $specificationInstance |
-    ConvertTo-Json |
+    ConvertTo-Json -Depth 3 |
     Set-Content -Path $Specification
