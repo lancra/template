@@ -1,6 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/lancra/template/main/.template/specification.schema.json",
-  "executions": [],
+  "executions": [
+    {
+      "display": "Sorting namespace imports.",
+      "stage": "replace",
+      "commands": [
+        "$repository/.template/scripts/sort-namespace-imports.ps1"
+      ]
+    }
+  ],
   "tokens": {
     "CSHARP_LANGUAGE_VERSION": {
       "description": "The version to use for the C# language.",
