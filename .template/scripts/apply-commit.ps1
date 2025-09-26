@@ -81,6 +81,11 @@ function Get-CommitGroupValue {
 $id = Get-CommitGroupValue -Commit $nextCommitMatch -Group $idGroupName
 $message = Get-CommitGroupValue -Commit $nextCommitMatch -Group $messageGroupName
 
+enum ExecutionSource {
+    Note
+    Specification
+}
+
 enum ApplicationStage {
     Pick
     Replace
@@ -88,18 +93,20 @@ enum ApplicationStage {
     Commit
 }
 
-class NoteExecution {
+class Execution {
+    [ExecutionSource] $Source
     [ApplicationStage] $Stage
     [string] $Display
     [string[]] $Commands
 
-    NoteExecution([ApplicationStage] $stage, [string] $display, [string[]] $commands) {
+    Execution([ExecutionSource] $source, [ApplicationStage] $stage, [string] $display, [string[]] $commands) {
+        $this.Source = $source
         $this.Stage = $stage
         $this.Display = $display
         $this.Commands = $commands
     }
 
-    static [NoteExecution[]] FromJson([string] $json) {
+    static [Execution[]] FromSourceJson([ExecutionSource] $source, [string] $json) {
         return $json |
             ConvertFrom-Json |
             Select-Object -ExpandProperty 'executions' |
@@ -110,25 +117,25 @@ class NoteExecution {
                         $_ -replace '\$repository', "$PSScriptRoot/../.."
                     }
 
-                [NoteExecution]::new($stage, $_.display, $commands)
+                [Execution]::new($source, $stage, $_.display, $commands)
             }
     }
 }
 
 $noteId = git notes list $id 2> $null
-$noteExecutions = @()
+$executions = [Execution]::FromSourceJson([ExecutionSource]::Specification, (Get-Content -Path $Specification))
 if ($null -ne $noteId) {
-    $noteExecutions = [NoteExecution]::FromJson((git show $noteId))
+    $executions += [Execution]::FromSourceJson([ExecutionSource]::Note, (git show $noteId))
 }
 
-function Invoke-NoteExecution {
+function Invoke-Execution {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [ApplicationStage] $Stage,
 
         [Parameter()]
-        [NoteExecution[]] $Execution
+        [Execution[]] $Execution
     )
     process {
         $stageExecutions = @($Execution |
@@ -137,17 +144,26 @@ function Invoke-NoteExecution {
             return
         }
 
-        Write-Output "Invoking $Stage notes executions."
-        $stageExecutions |
+        [System.Enum]::GetNames([ExecutionSource]) |
             ForEach-Object {
-                Write-Output $_.Display
-                $_.Commands |
-                    ForEach-Object {
-                        $_ |
-                            Invoke-Expression
-                    }
+                $sourceExecutions = @($stageExecutions |
+                    Where-Object -Property Source -eq $_)
+                if ($sourceExecutions.Length -eq 0) {
+                    return
+                }
 
-                Write-Output ''
+                Write-Output "Invoking $Stage executions from the $_ source."
+                $sourceExecutions |
+                    ForEach-Object {
+                        Write-Output $_.Display
+                        $_.Commands |
+                            ForEach-Object {
+                                $_ |
+                                    Invoke-Expression
+                            }
+
+                        Write-Output ''
+                    }
             }
     }
 }
@@ -155,21 +171,21 @@ function Invoke-NoteExecution {
 Write-Output "Picking '$message'."
 git cherry-pick --no-commit $id
 Write-Output ''
-Invoke-NoteExecution -Stage ([ApplicationStage]::Pick) -Execution $noteExecutions
+Invoke-Execution -Stage ([ApplicationStage]::Pick) -Execution $executions
 
 Write-Output "Replacing tokens."
 & "$PSScriptRoot/replace-tokens.ps1" -Specification $Specification
 Write-Output ''
-Invoke-NoteExecution -Stage ([ApplicationStage]::Replace) -Execution $noteExecutions
+Invoke-Execution -Stage ([ApplicationStage]::Replace) -Execution $executions
 
 Write-Output "Adding changes."
 git add .
 Write-Output ''
-Invoke-NoteExecution -Stage ([ApplicationStage]::Add) -Execution $noteExecutions
+Invoke-Execution -Stage ([ApplicationStage]::Add) -Execution $executions
 
 Write-Output "Committing '$message'."
 git commit --message "$message"
-Invoke-NoteExecution -Stage ([ApplicationStage]::Commit) -Execution $noteExecutions
+Invoke-Execution -Stage ([ApplicationStage]::Commit) -Execution $executions
 
 $newCommitMatchLine = "*$($nextCommitMatch.Value.Substring(1))"
 $todoLines -replace $nextCommitMatch.Value, $newCommitMatchLine |
