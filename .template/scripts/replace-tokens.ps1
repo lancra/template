@@ -54,6 +54,40 @@ class TokenResult {
     }
 }
 
+class TokenMatchFile {
+    [string] $Path
+    [TokenMatch[]] $Tokens
+
+    TokenMatchFile([string] $path, [TokenMatch[]] $tokens) {
+        $this.Path = $path
+        $this.Tokens = $tokens
+    }
+}
+
+class TokenMatch {
+    [int] $LineNumber
+    [string] $Token
+    [int] $StartIndex
+    [int] $EndIndex
+
+    TokenMatch([int] $lineNumber, [string] $token, [int] $startIndex, [int] $endIndex) {
+        $this.LineNumber = $lineNumber
+        $this.Token = $token
+        $this.StartIndex = $startIndex
+        $this.EndIndex = $endIndex
+    }
+}
+
+class TokenReplacementResult {
+    [string] $Text
+    [int] $IndexOffset
+
+    TokenReplacementResult([string] $text, [int] $indexOffset) {
+        $this.Text = $text
+        $this.IndexOffset = $indexOffset
+    }
+}
+
 if ($File.Length -eq 0) {
     $File = @(& git diff --name-only --staged)
 }
@@ -75,62 +109,112 @@ $specificationInstance.tokens.PSObject.Properties |
         $tokenResults["__$($_.Name)__"] = $result
     }
 
-$tokenPattern = '__(?=[A-Z])[A-Z_].*(?<!_)__'
+$tokenPattern = '__[^\W_]\w*?__'
 
-function Set-Tokens {
+function Set-Token {
     [CmdletBinding()]
     [OutputType([string])]
     param(
         [Parameter(Mandatory)]
-        [string] $Path,
-
-        [Parameter()]
         [string] $Text,
 
+        [Parameter(Mandatory)]
+        [TokenMatch] $TokenMatch,
+
         [Parameter()]
-        [int] $Line
+        [int] $IndexOffset = 0
     )
-    begin {
-        $indexDifference = 0
-    }
     process {
-        $newText = $Text
-        $Text |
-            Select-String -AllMatches -Pattern $tokenPattern |
-            Select-Object -ExpandProperty Matches |
-            ForEach-Object {
-                if (-not $tokenResults.ContainsKey($_.Value)) {
-                    Write-Warning "No specification found for token '$($_.Value)'."
-                    return
-                }
+        if (-not $tokenResults.ContainsKey($TokenMatch.Token)) {
+            Write-Warning "No specification found for token '$($_.Token)'."
+            return
+        }
 
-                $prefix = $newText.Substring(0, $_.Index + $indexDifference)
-                $tokenValue = $tokenResults[$_.Value].GetValue($Path, $Text, $Line)
-                $suffix = $newText.Substring($_.Index + $indexDifference + $_.Length)
+        $startIndex = $TokenMatch.StartIndex + $IndexOffset
+        $endIndex = $TokenMatch.EndIndex + $IndexOffset
 
-                $newText = "$prefix$tokenValue$suffix"
-                $indexDifference += ($tokenValue.Length - $_.Value.Length)
-            }
+        $prefix = $startIndex -ne 0 ? $Text.Substring(0, $startIndex) : ''
+        $tokenValue = $tokenResults[$TokenMatch.Token].GetValue($MatchFile.Path, $Text, $TokenMatch.LineNumber)
+        $suffix = $endIndex -ne $Text.Length ? $Text.Substring($endIndex, $Text.Length - $endIndex) : ''
 
-        $newText
+        $newText = $prefix + $tokenValue + $suffix
+        $newIndexOffset = $IndexOffset + $tokenValue.Length - $TokenMatch.Token.Length
+
+        return [TokenReplacementResult]::new($newText, $newIndexOffset)
     }
 }
 
-$File |
-    ForEach-Object {
-        $path = $_
-        $lineNumber = 0
+function Set-FileToken {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [TokenMatchFile] $MatchFile
+    )
+    process {
+        $lines = @(Get-Content -Path $MatchFile.Path)
+        $replacementIndexOffsets = [int[]]::new($lines.Length)
 
-        $lines = Get-Content -Path $path |
+        $MatchFile |
+            Select-Object -ExpandProperty Tokens |
             ForEach-Object {
-                $lineNumber++
-                Set-Tokens -Path $path -Text $_ -Line $lineNumber
+                $lineIndex = $_.LineNumber - 1
+                $line = $lines[$lineIndex]
+                $replacementIndexOffset = $replacementIndexOffsets[$lineIndex]
+
+                $result = Set-Token -Text $line -TokenMatch $_ -IndexOffset $replacementIndexOffset
+
+                $lines[$lineIndex] = $result.Text
+                $replacementIndexOffsets[$lineIndex] = $replacementIndexOffset + $result.IndexOffset
             }
 
-        Set-Content -Path $path -Value $lines
+        $lines |
+            Set-Content -Path $MatchFile.Path
+    }
+}
 
-        $newPath = Set-Tokens -Path $path -Text $path
-        if ($newPath -ne $path) {
-            Move-Item -Path $_ -Destination $newPath
+$tokenMatchFiles = rg --json $tokenPattern $File |
+    ForEach-Object { $_ | ConvertFrom-Json } |
+    Where-Object -Property 'type' -EQ 'match' |
+    Select-Object -ExpandProperty 'data' |
+    ForEach-Object {
+        $lineMatch = $_
+        $_.submatches |
+            ForEach-Object {
+                [pscustomobject]@{
+                    Path = $lineMatch.path.text
+                    LineNumber = $lineMatch.line_number
+                    Token = $_.match.text
+                    StartIndex = $_.start
+                    EndIndex = $_.end
+                }
+            }
+    } |
+    Sort-Object -Property Path, LineNumber, StartIndex |
+    Group-Object -Property Path |
+    ForEach-Object {
+        $tokens = $_ |
+            Select-Object -ExpandProperty Group |
+            ForEach-Object {
+                [TokenMatch]::new($_.LineNumber, $_.Token, $_.StartIndex, $_.EndIndex)
+            }
+
+        [TokenMatchFile]::new($_.Name, $tokens)
+    }
+
+$File |
+    ForEach-Object {
+        $tokenMatchFile = $tokenMatchFiles |
+            Where-Object -Property Path -EQ $_
+        if ($tokenMatchFile) {
+            Set-FileToken -MatchFile $tokenMatchFile
+        }
+
+        $pathMatch = $_ |
+            Select-String -Pattern $tokenPattern |
+            Select-Object -ExpandProperty Matches
+        if ($pathMatch) {
+            $pathTokenMatch = [TokenMatch]::new(0, $pathMatch.Value, $pathMatch.Index, $pathMatch.Index + $pathMatch.Length)
+            $pathResult = Set-Token -Text $_ -TokenMatch $pathTokenMatch
+            Move-Item -Path $_ -Destination $pathResult.Text
         }
     }
