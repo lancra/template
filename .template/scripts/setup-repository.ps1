@@ -44,12 +44,18 @@ if ($LASTEXITCODE -ne 0) {
     throw "The $Template template was not found in the template repository."
 }
 
+if ($Template -eq 'main' -or $Template -eq 'base' -or $Template.StartsWith('base-')) {
+    throw "The $Template infrastructure template cannot be used."
+}
+
+$templateParent = $Template.Contains('-') ? $Template.Split('-')[0] : $Template
+
 Write-Output "Fetching notes for template repository."
 git -C $Repository fetch origin refs/notes/*:refs/notes/*
 Write-Output ''
 
 Write-Output "Creating local template branches for '$Template'."
-git -C $Repository branch --track "base-$Template" "origin/base-$Template"
+git -C $Repository branch --track "base-$templateParent" "origin/base-$templateParent"
 git -C $Repository branch --track "$Template" "origin/$Template"
 Write-Output ''
 
@@ -78,4 +84,4 @@ Write-Output "Adding template TODO to local ignore file."
 Add-Content -Path '.git/info/exclude' -Value "$todoFile`n" -NoNewline
 
 Write-Output "Creating template TODO."
-git --no-pager log --oneline --reverse --format="  %H %s" "template/base-$Template..template/$Template" > $todoFile
+git --no-pager log --oneline --reverse --format="  %H %s" "template/base-$templateParent..template/$Template" > $todoFile
