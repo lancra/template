@@ -55,8 +55,8 @@ git -C $Repository fetch origin refs/notes/*:refs/notes/*
 Write-Output ''
 
 Write-Output "Creating local template branches for '$Template'."
-git -C $Repository branch --track "base-$templateParent" "origin/base-$templateParent"
-git -C $Repository branch --track "$Template" "origin/$Template"
+git -C $Repository branch --track "base-$templateParent" "origin/base-$templateParent" 2> $null
+git -C $Repository branch --track "$Template" "origin/$Template" 2> $null
 Write-Output ''
 
 Write-Output "Switching to target template branch."
