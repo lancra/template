@@ -12,11 +12,18 @@
     <File Path="README.md" />
     <File Path="stylecop.json" />
   </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Application/__PROJECT__.Application.csproj" />
+    <Project Path="src/Domain/__PROJECT__.Domain.csproj" />
+    <Project Path="src/Infrastructure/__PROJECT__.Infrastructure.csproj" />
+  </Folder>
 
   <Folder Name="/tests/" Id="__GUID__">
     <File Path="tests/Directory.Build.props" />
     <File Path="tests/TestingSuppressions.cs" />
     <File Path="tests/xunit.runner.json" />
+    <Project Path="tests/Domain.Facts/__PROJECT__.Domain.Facts.csproj" />
+    <Project Path="tests/IntegrationTests/__PROJECT__.IntegrationTests.csproj" />
   </Folder>
 
   <Folder Name="/tools/" Id="__GUID__">
