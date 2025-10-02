@@ -8,11 +8,13 @@ internal sealed class TestTarget : ITarget
             TargetKeys.TestIntegration,
             "Tests integrations between components of the application.",
             [
+                new("integration", "tests/IntegrationTests"),
             ]),
         new(
             TargetKeys.TestUnit,
             "Tests individual components of the application",
             [
+                new("domain", "tests/Domain.Facts"),
             ]),
     ];
 
