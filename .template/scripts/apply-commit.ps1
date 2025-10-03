@@ -78,8 +78,8 @@ function Get-CommitGroupValue {
     }
 }
 
-$id = Get-CommitGroupValue -Commit $nextCommitMatch -Group $idGroupName
-$message = Get-CommitGroupValue -Commit $nextCommitMatch -Group $messageGroupName
+$commitId = Get-CommitGroupValue -Commit $nextCommitMatch -Group $idGroupName
+$commitMessage = Get-CommitGroupValue -Commit $nextCommitMatch -Group $messageGroupName
 
 enum ExecutionSource {
     Note
@@ -122,7 +122,7 @@ class Execution {
     }
 }
 
-$noteId = git notes list $id 2> $null
+$noteId = git notes list $commitId 2> $null
 $executions = [Execution]::FromSourceJson([ExecutionSource]::Specification, (Get-Content -Path $Specification))
 if ($null -ne $noteId) {
     $executions += [Execution]::FromSourceJson([ExecutionSource]::Note, (git show $noteId))
@@ -152,39 +152,43 @@ function Invoke-Execution {
                     return
                 }
 
-                Write-Output "Invoking $Stage executions from the $_ source."
-                $sourceExecutions |
-                    ForEach-Object {
-                        Write-Output $_.Display
-                        $_.Commands |
-                            ForEach-Object {
-                                $_ |
-                                    Invoke-Expression
-                            }
-
-                        Write-Output ''
-                    }
+                & "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Invoking $Stage executions from the $_ source" -Script {
+                    $sourceExecutions |
+                        ForEach-Object {
+                            Write-Output $_.Display
+                            $_.Commands |
+                                ForEach-Object {
+                                    $_ |
+                                        Invoke-Expression
+                                }
+                        }
+                }
             }
     }
 }
 
-Write-Output "Picking '$message'."
-git cherry-pick --no-commit $id
-Write-Output ''
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Picking '$commitMessage'" -Script {
+    git cherry-pick --no-commit $commitId
+}
+
 Invoke-Execution -Stage ([ApplicationStage]::Pick) -Execution $executions
 
-Write-Output "Replacing tokens."
-& "$PSScriptRoot/replace-tokens.ps1" -Specification $Specification
-Write-Output ''
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Replacing tokens" -Script {
+    & "$PSScriptRoot/replace-tokens.ps1" -Specification $Specification
+}
+
 Invoke-Execution -Stage ([ApplicationStage]::Replace) -Execution $executions
 
-Write-Output "Adding changes."
-git add .
-Write-Output ''
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Adding changes" -Script {
+    git add .
+}
+
 Invoke-Execution -Stage ([ApplicationStage]::Add) -Execution $executions
 
-Write-Output "Committing '$message'."
-git commit --message "$message"
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Committing '$commitMessage'" -Script {
+    git commit --message "$commitMessage"
+}
+
 Invoke-Execution -Stage ([ApplicationStage]::Commit) -Execution $executions
 
 $newCommitMatchLine = "*$($nextCommitMatch.Value.Substring(1))"

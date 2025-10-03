@@ -50,38 +50,44 @@ if ($Template -eq 'main' -or $Template -eq 'base' -or $Template.StartsWith('base
 
 $templateParent = $Template.Contains('-') ? $Template.Split('-')[0] : $Template
 
-Write-Output "Fetching notes for template repository."
-git -C $Repository fetch origin refs/notes/*:refs/notes/*
-Write-Output ''
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Fetching notes for template repository" -Script {
+    git -C $Repository fetch origin refs/notes/*:refs/notes/*
+}
 
-Write-Output "Creating local template branches for '$Template'."
-git -C $Repository branch --track "base-$templateParent" "origin/base-$templateParent" 2> $null
-git -C $Repository branch --track "$Template" "origin/$Template" 2> $null
-Write-Output ''
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Creating local template branches for '$Template'" -Script {
+    git -C $Repository branch --track "base-$templateParent" "origin/base-$templateParent" 2> $null
+    git -C $Repository branch --track "$Template" "origin/$Template" 2> $null
+}
 
-Write-Output "Switching to target template branch."
-git -C $Repository switch "$Template"
-Write-Output ''
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Switching to target template branch" -Script {
+    git -C $Repository switch "$Template"
+}
 
-Write-Output "Adding template remote to current repository."
-git remote add template $Repository
-git remote update template
-Write-Output ''
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Adding template remote to current repository" -Script {
+    git remote add template $Repository
+    git remote update template
+}
 
-Write-Output "Fetching notes for template remote."
-git fetch template refs/notes/*:refs/notes/*
-Write-Output ''
 
-Write-Output "Disabling reuse of recorded resolutions in repository."
-git config set --local rerere.enabled false
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Fetching notes for template remote" -Script {
+    git fetch template refs/notes/*:refs/notes/*
+}
 
-Write-Output "Extracting template specification to '$Specification'."
-git show "template/${Template}:.template/specification.json" > $Specification
+
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Disabling reuse of recorded resolutions in repository" -Script {
+    git config set --local rerere.enabled false
+}
+
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Extracting template specification to '$Specification'" -Script {
+    git show "template/${Template}:.template/specification.json" > $Specification
+}
 
 $todoFile = '.template.todo'
 
-Write-Output "Adding template TODO to local ignore file."
-Add-Content -Path '.git/info/exclude' -Value "$todoFile`n" -NoNewline
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Adding template TODO to local ignore file" -Script {
+    Add-Content -Path '.git/info/exclude' -Value "$todoFile`n" -NoNewline
+}
 
-Write-Output "Creating template TODO."
-git --no-pager log --oneline --reverse --format="  %H %s" "template/base-$templateParent..template/$Template" > $todoFile
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Creating template TODO" -Script {
+    git --no-pager log --oneline --reverse --format="  %H %s" "template/base-$templateParent..template/$Template" > $todoFile
+}
