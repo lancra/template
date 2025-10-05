@@ -34,52 +34,14 @@ if (-not (Test-Path -Path $Specification)) {
     throw "The template specification was not found at '$Specification'."
 }
 
-$todoLines = Get-Content -Path $todoFile
-
-$indication = '*'
-$indicatorGroupName = 'indicator'
-$idGroupName = 'id'
-$messageGroupName = 'message'
-$commitMatches = $todoLines |
-    Select-String -Pattern "(?<$indicatorGroupName>[$indication ]{1}) (?<$idGroupName>[0-9a-f]{40}) (?<$messageGroupName>.+)" |
-    Select-Object -ExpandProperty Matches
-
-$nextCommitMatch = $commitMatches |
-    ForEach-Object {
-        $indicatedGroup = $_ |
-            Select-Object -ExpandProperty Groups |
-            Where-Object -Property Name -EQ $indicatorGroupName |
-            Where-Object -Property Value -NE $indication
-        if ($indicatedGroup) {
-            return $_
-        }
-    } |
-    Select-Object -First 1
-if (-not $nextCommitMatch) {
+$nextCommit = & "$PSScriptRoot/next-todo-commit.ps1" -Path $todoFile
+if ($null -eq $nextCommit) {
     Write-Output 'All template commits have been applied.'
     exit 0
 }
 
-function Get-CommitGroupValue {
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory)]
-        [System.Text.RegularExpressions.Match] $Commit,
-
-        [Parameter(Mandatory)]
-        [string] $Group
-    )
-    process {
-        $Commit |
-            Select-Object -ExpandProperty Groups |
-            Where-Object -Property Name -EQ $Group |
-            Select-Object -ExpandProperty Value
-    }
-}
-
-$commitId = Get-CommitGroupValue -Commit $nextCommitMatch -Group $idGroupName
-$commitMessage = Get-CommitGroupValue -Commit $nextCommitMatch -Group $messageGroupName
+$commitId = $nextCommit.Id
+$commitMessage = $nextCommit.Message
 
 enum ExecutionSource {
     Note
@@ -191,6 +153,7 @@ Invoke-Execution -Stage ([ApplicationStage]::Add) -Execution $executions
 
 Invoke-Execution -Stage ([ApplicationStage]::Commit) -Execution $executions
 
-$newCommitMatchLine = "*$($nextCommitMatch.Value.Substring(1))"
-$todoLines -replace $nextCommitMatch.Value, $newCommitMatchLine |
+$newNextCommitLine = "*$($nextCommit.Line.Substring(1))"
+$todoLines = Get-Content -Path $todoFile
+$todoLines -replace $nextCommit.Line, $newNextCommitLine |
     Set-Content -Path $todoFile
