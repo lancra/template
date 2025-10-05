@@ -129,7 +129,7 @@ function Invoke-Execution {
     }
 }
 
-& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Picking '$commitMessage'" -Script {
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Picking changes" -Script {
     git cherry-pick --no-commit $commitId
 }
 
@@ -147,7 +147,7 @@ Invoke-Execution -Stage ([ApplicationStage]::Replace) -Execution $executions
 
 Invoke-Execution -Stage ([ApplicationStage]::Add) -Execution $executions
 
-& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Committing '$commitMessage'" -Script {
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Committing changes" -Script {
     git commit --message "$commitMessage"
 }
 

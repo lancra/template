@@ -30,10 +30,10 @@ This repository provides various templates for new Git repositories.
    & "$repository/.template/scripts/populate-token-values.ps1" -Specification $specification
    ```
 
-1. Apply each commit for the template.
+1. Apply commits for the template.
 
    ```powershell
-   & "$repository/.template/scripts/apply-commit.ps1" -Specification $specification
+   & "$repository/.template/scripts/apply.ps1" -Specification $specification
    ```
 
 1. Remove remnants of the template process.
