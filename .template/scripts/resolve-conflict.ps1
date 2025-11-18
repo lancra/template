@@ -38,13 +38,35 @@ if ($items.Length -eq 0) {
     throw "Unable to resolve conflicts for multiple items: $itemsDisplay."
 }
 
+$file = $items[0]
+
 enum IndexRangeTarget {
     Ours
     Theirs
 }
 
+class LineCounts {
+    [int] $Ours
+    [int] $Theirs
+
+    LineCounts([int] $ours, [int] $theirs) {
+        $this.Ours = $ours
+        $this.Theirs = $theirs
+    }
+
+    [int] GetByTarget([IndexRangeTarget] $target) {
+        if ($target -eq [IndexRangeTarget]::Ours) {
+            return $this.Ours
+        } elseif ($target -eq [IndexRangeTarget]::Theirs) {
+            return $this.Theirs
+        }
+
+        throw "The $target target has not been configured for line counts."
+    }
+}
+
 $script:rangeGroupName = 'range'
-$script:rangesPattern = "(?<$rangeGroupName>[<>]\d(-\d)?)"
+$script:rangesPattern = "(?<$rangeGroupName>[<>](\d(-(\d|\*))?|\*))"
 
 class IndexRange {
     [IndexRangeTarget] $Target
@@ -57,7 +79,7 @@ class IndexRange {
         $this.End = $end
     }
 
-    static [IndexRange] FromText([string] $text) {
+    static [IndexRange] FromText([string] $text, [LineCounts] $counts) {
         if (-not ($text -match $script:rangesPattern)) {
             throw "The range '$text' is invalid."
         }
@@ -71,13 +93,25 @@ class IndexRange {
 
         $values = $text.Substring(1) -split '-'
 
-        $startValue = [int]$values[0]
-
-        if ($values.Length -eq 1) {
-            return [IndexRange]::new($targetValue, $startValue, $startValue)
+        $startValueText = $values[0]
+        if ($startValueText -eq '*') {
+            $startValue = 0
+            $endValue = $counts.GetByTarget($targetValue) - 1
+        } else {
+            $startValue = [int]$startValueText
+            $endValue = $startValue
         }
 
-        $endValue = [int]$values[1]
+        if ($values.Length -eq 1) {
+            return [IndexRange]::new($targetValue, $startValue, $endValue)
+        }
+
+        $endValueText = $values[1]
+        if ($endValueText -eq '*') {
+            $endValue = $counts.GetByTarget($targetValue) - 1
+        } else {
+            $endValue = [int]$endValueText
+        }
 
         if ($startValue -gt $endValue) {
             throw "The start value must be less than the end value on the range '$text'."
@@ -94,7 +128,7 @@ class ConflictSpecification {
         $this.Ranges = $ranges
     }
 
-    static [ConflictSpecification] FromText([string] $text) {
+    static [ConflictSpecification] FromText([string] $text, [LineCounts] $counts) {
         if (-not $text) {
             return [ConflictSpecification]::new(@())
         }
@@ -113,7 +147,7 @@ class ConflictSpecification {
 
         $indexRanges = $indexRangeGroups |
             ForEach-Object {
-                [IndexRange]::FromText($_.Value)
+                [IndexRange]::FromText($_.Value, $counts)
             }
 
         return [ConflictSpecification]::new($indexRanges)
@@ -160,9 +194,6 @@ class ConflictSpecification {
         throw $conflictSpecificationMatchError
     }
 }
-
-$file = $items[0]
-$conflictSpecification = [ConflictSpecification]::FromText($Specification)
 
 enum MarkerScan {
     Ours
@@ -227,6 +258,9 @@ Get-Content -Path $file |
             }
         }
     }
+
+$lineCounts = [LineCounts]::new($oursLines.Count, $theirsLines.Count)
+$conflictSpecification = [ConflictSpecification]::FromText($Specification, $lineCounts)
 
 $selectedLines = @()
 $conflictSpecification.Ranges |
