@@ -269,5 +269,15 @@ $conflictSpecification.Ranges |
         $selectedLines += ,$sourceLines[($_.Start)..($_.End)]
     }
 
+if (-not [string]::IsNullOrEmpty($env:TEMPLATE_SHOW_CONFLICT)) {
+    $splitMarker = [string]::new('-', $markerCharacterCount * 2)
+    @($splitMarker) + @($oursMarker) + @($oursLines) + @($separatorMarker) + @($theirsLines) + @($theirsMarker) |
+        Write-Output
+    @($splitMarker) + $Specification + @($splitMarker) |
+        Write-Output
+    @($selectedLines) + @($splitMarker) |
+        Write-Output
+}
+
 @($beforeLines) + @($selectedLines) + @($afterLines) |
     Set-Content -Path $file
