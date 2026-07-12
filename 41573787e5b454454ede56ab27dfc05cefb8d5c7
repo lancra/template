@@ -1,0 +1,12 @@
+{
+  "$id": "https://raw.githubusercontent.com/lancra/template/main/.template/note.schema.json",
+  "executions": [
+    {
+      "display": "Resolving artifact paths conflict.",
+      "stage": "pick",
+      "commands": [
+        "$repository/.template/scripts/resolve-conflict.ps1 -Path tools/Dev/ArtifactPaths.cs -Specification '<0>1-4'"
+      ]
+    }
+  ]
+}
