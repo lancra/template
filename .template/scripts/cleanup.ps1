@@ -19,16 +19,19 @@ param(
 Write-Output "Removing template remote from current repository."
 git remote remove template
 
-$todoFile = '.template.todo'
+$templateInfrastructure = @(
+    '.template.specification',
+    '.template.todo'
+)
 
-Write-Output "Removing template TODO."
-Remove-Item -Path $todoFile
+Write-Output "Removing template infrastructure."
+Remove-Item -Path '*' -Include $templateInfrastructure
 
-Write-Output "Removing template TODO from local ignore file."
+Write-Output "Removing template infrastructure from local ignore file."
 $localIgnoreFile = '.git/info/exclude'
 $newIgnoreLines = Get-Content -Path $localIgnoreFile |
     ForEach-Object {
-        if ($_ -eq $todoFile) {
+        if ($templateInfrastructure -contains $_) {
             return
         }
 

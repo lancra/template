@@ -5,12 +5,9 @@ Replaces template tokens in a file's content and name.
 .DESCRIPTION
 Reads the content of each applicable file, iterating through each line. Using a
 regular expression, all tokens are replaced with the value specified in the
-source specification. The modified lines are then written back to the target
+source tokens file. The modified lines are then written back to the target
 file. Finally, the file name itself is checked for tokens, and if found, they
 are replaced and the file is renamed.
-
-.PARAMETER Specification
-The source template specification to replace tokens with.
 
 .PARAMETER File
 The file(s) to modify. If this is not provided, all files in the latest commit
@@ -19,9 +16,6 @@ are used.
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
-    [string] $Specification,
-
     [Parameter()]
     [string[]] $File
 )
@@ -92,16 +86,17 @@ if ($File.Length -eq 0) {
     $File = @(& git diff --name-only --staged)
 }
 
-if (-not (Test-Path -Path $Specification)) {
-    throw "The template specification was not found at '$Specification'."
+$specificationPath = '.template.specification'
+if (-not (Test-Path -Path $specificationPath)) {
+    throw "The template specification was not found at '$specificationPath'."
 }
 
-$specificationInstance = Get-Content -Path $Specification |
+$specification = Get-Content -Path $specificationPath |
     ConvertFrom-Json
 
 $tokenResults = @{}
 
-$specificationInstance.tokens.PSObject.Properties |
+$specification.tokens.PSObject.Properties |
     ForEach-Object {
         $kind = [TokenKind]$_.Value.kind
         $text = $kind -eq [TokenKind]::Static ? $_.Value.value : $_.Value.generator
@@ -126,7 +121,7 @@ function Set-Token {
     )
     process {
         if (-not $tokenResults.ContainsKey($TokenMatch.Token)) {
-            Write-Warning "No specification found for token '$($_.Token)'."
+            Write-Warning "No value found for token '$($_.Token)'."
             return
         }
 

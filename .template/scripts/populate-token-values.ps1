@@ -3,12 +3,12 @@
 Prompts for population of static token definition values in a specification.
 
 .DESCRIPTION
-Iterates through each token definition in the provided specification, prompting
-for a value if it is not provided as a parameter. The resulting specification is
-then rewritten back to the file.
+Iterates through each token definition in specification from the provided
+repository, prompting for a value if it is not provided as a parameter. The
+resulting specification is then rewritten back to the target repository.
 
-.PARAMETER Specification
-The source template specification to add token values to.
+.PARAMETER Repository
+The path of the template repository.
 
 .PARAMETER Value
 The token key-values to population in the target specification.
@@ -21,7 +21,7 @@ prompting for input.
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string] $Specification,
+    [string] $Repository,
 
     [Parameter()]
     [hashtable] $Value = @{},
@@ -29,19 +29,29 @@ param(
     [switch] $NoPrompt
 )
 
-if (-not (Test-Path -Path $Specification)) {
-    throw "The template specification was not found at '$Specification'."
+$sourceSpecificationPath = "$Repository/.template/specification.json"
+if (-not (Test-Path -Path $sourceSpecificationPath)) {
+    throw "The template specification was not found at '$sourceSpecificationPath'."
 }
 
-$specificationInstance = Get-Content -Path $Specification |
+$sourceSpecification = Get-Content -Path $sourceSpecificationPath |
     ConvertFrom-Json
+$targetSpecification = @{
+    executions = $sourceSpecification.executions
+    tokens = @{}
+}
 
 $missingValueKeys = @()
-$specificationInstance.tokens.PSObject.Properties |
+$sourceSpecification.tokens.PSObject.Properties |
     Select-Object -ExpandProperty Name |
     ForEach-Object {
-        $token = $specificationInstance.tokens.$_
+        $token = $sourceSpecification.tokens.$_
         if ($token.kind -ne 'static') {
+            $targetSpecification.tokens.$_ = @{
+                kind = $token.kind
+                generator = $token.generator
+            }
+
             return
         }
 
@@ -72,7 +82,12 @@ $specificationInstance.tokens.PSObject.Properties |
             }
         }
 
-        $specificationInstance.tokens.$_.value = $tokenValue
+        $targetToken = @{
+            kind = $token.kind
+            value = $tokenValue
+        }
+
+        $targetSpecification.tokens.$_ = $targetToken
 
         if ($promptRequired -and -not $NoPrompt) {
             Write-Output ''
@@ -88,6 +103,6 @@ if ($missingValueKeys.Length -gt 0) {
     exit 1
 }
 
-$specificationInstance |
-    ConvertTo-Json -Depth 3 |
-    Set-Content -Path $Specification
+$targetSpecification |
+    ConvertTo-Json -Depth 10 |
+    Set-Content -Path "$PWD/.template.specification"

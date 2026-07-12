@@ -1,8 +1,5 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
-    [string] $Specification,
-
     [switch] $SkipWait
 )
 
@@ -10,7 +7,7 @@ $todoFile = '.template.todo'
 $nextCommit = & "$PSScriptRoot/next-todo-commit.ps1" -Path $todoFile
 while ($null -ne $nextCommit) {
     & "$PSScriptRoot/execute-script.ps1" -Kind 'Group' -Message "Applying '$($nextCommit.Message)'" -Script {
-        & "$PSScriptRoot/apply-commit.ps1" -Specification $Specification
+        & "$PSScriptRoot/apply-commit.ps1"
     }
 
     $nextCommit = & "$PSScriptRoot/next-todo-commit.ps1" -Path $todoFile

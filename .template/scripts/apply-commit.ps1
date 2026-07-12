@@ -7,16 +7,10 @@ First, the template TODO file is setup if not present. Then, the first commit
 without an indicator is cherry-picked into the repository, the provided tokens
 are replaced into it, and any notes executions are run. Finally, the indicator
 is added to the applied commit in the TODO file.
-
-.PARAMETER Specification
-The location of the template specification to use.
 #>
 
 [CmdletBinding()]
-param(
-    [Parameter(Mandatory)]
-    [string] $Specification
-)
+param()
 
 $status = git status --short
 if ($null -ne $status) {
@@ -30,8 +24,9 @@ if (-not $inRepositoryRoot) {
     throw "Template commits must be applied from the repository root."
 }
 
-if (-not (Test-Path -Path $Specification)) {
-    throw "The template specification was not found at '$Specification'."
+$specificationPath = "$PWD/.template.specification"
+if (-not (Test-Path -Path $specificationPath)) {
+    throw "The template specification was not found at '$specificationPath'."
 }
 
 $nextCommit = & "$PSScriptRoot/next-todo-commit.ps1" -Path $todoFile
@@ -85,7 +80,7 @@ class Execution {
 }
 
 $noteId = git notes list $commitId 2> $null
-$executions = [Execution]::FromSourceJson([ExecutionSource]::Specification, (Get-Content -Path $Specification))
+$executions = [Execution]::FromSourceJson([ExecutionSource]::Specification, (Get-Content -Path $specificationPath))
 if ($null -ne $noteId) {
     $executions += [Execution]::FromSourceJson([ExecutionSource]::Note, (git show $noteId))
 }
@@ -136,7 +131,7 @@ function Invoke-Execution {
 Invoke-Execution -Stage ([ApplicationStage]::Pick) -Execution $executions
 
 & "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Replacing tokens" -Script {
-    & "$PSScriptRoot/replace-tokens.ps1" -Specification $Specification
+    & "$PSScriptRoot/replace-tokens.ps1"
 }
 
 Invoke-Execution -Stage ([ApplicationStage]::Replace) -Execution $executions

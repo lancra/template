@@ -10,11 +10,11 @@ specification to a location.
 .PARAMETER Repository
 The path of the template repository.
 
-.PARAMETER Specification
-The location of the template specification to create.
-
 .PARAMETER Template
 The target template to apply.
+
+.PARAMETER SkipTokens
+Specifies that token population should be skipped.
 #>
 
 [CmdletBinding()]
@@ -23,10 +23,9 @@ param(
     [string] $Repository,
 
     [Parameter(Mandatory)]
-    [string] $Specification,
+    [string] $Template,
 
-    [Parameter(Mandatory)]
-    [string] $Template
+    [switch] $SkipTokens
 )
 
 $inRepositoryRoot = Test-Path -Path '.git'
@@ -78,16 +77,18 @@ $templateParent = $Template.Contains('-') ? $Template.Split('-')[0] : $Template
     git config set --local rerere.enabled false
 }
 
-& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Extracting template specification to '$Specification'" -Script {
-    git show "template/${Template}:.template/specification.json" > $Specification
-}
-
+$specificationFile = '.template.specification'
 $todoFile = '.template.todo'
 
-& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Adding template TODO to local ignore file" -Script {
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Adding template infrastructure to local ignore file" -Script {
+    Add-Content -Path '.git/info/exclude' -Value "$specificationFile`n" -NoNewline
     Add-Content -Path '.git/info/exclude' -Value "$todoFile`n" -NoNewline
 }
 
-& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Creating template TODO" -Script {
+& "$PSScriptRoot/execute-script.ps1" -Kind 'Task' -Message "Creating template infrastructure" -Script {
     git --no-pager log --oneline --reverse --format="  %H %s" "template/base-$templateParent..template/$Template" > $todoFile
+
+    if (-not $SkipTokens) {
+        & $PSScriptRoot/populate-token-values.ps1 -Repository $Repository
+    }
 }

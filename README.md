@@ -8,7 +8,6 @@ This repository provides various templates for new Git repositories.
 
    ```powershell
    $repository = "PATH"
-   $specification = "PATH"
    $template = "NAME"
    ```
 
@@ -21,19 +20,19 @@ This repository provides various templates for new Git repositories.
 1. Setup current repository.
 
    ```powershell
-   & "$repository/.template/scripts/setup.ps1" -Repository $repository -Specification $specification -Template $template
+   & "$repository/.template/scripts/setup.ps1" -Repository $repository -Template $template
    ```
 
-1. Populate token values in the copied specification.
+1. Apply all commits for the template.
 
    ```powershell
-   & "$repository/.template/scripts/populate-token-values.ps1" -Specification $specification
+   & "$repository/.template/scripts/apply.ps1"
    ```
 
-1. Apply commits for the template.
+   Alternatively, apply all commits for the template without prompting the user between each.
 
    ```powershell
-   & "$repository/.template/scripts/apply.ps1" -Specification $specification
+   & "$repository/.template/scripts/apply.ps1" -SkipWait
    ```
 
 1. Remove remnants of the template process.
