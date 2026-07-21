@@ -66,7 +66,7 @@ class LineCounts {
 }
 
 $script:rangeGroupName = 'range'
-$script:rangesPattern = "(?<$rangeGroupName>[<>](\d(-(\d|\*))?|\*))"
+$script:rangesPattern = "(?<$rangeGroupName>[<>](\d+(-(\d+|\*))?|\*))"
 
 class IndexRange {
     [IndexRangeTarget] $Target
